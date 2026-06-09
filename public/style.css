@@ -1,0 +1,351 @@
+/* Core Styling Variables - Updated to Barangay White & Green Theme */
+:root {
+    --bg-primary: #f8fafc;       /* Clean off-white background */
+    --bg-secondary: #ffffff;     /* Pure white for cards */
+    --text-main: #0f172a;        /* Deep dark gray for text readable on white */
+    --text-muted: #64748b;       /* Slate gray for secondary text */
+    --accent-green: #15803d;     /* Official Barangay Forest Green */
+    --accent-green-light: #bbf7d0; /* Soft green tint for headers/hover */
+    --status-entry: #16a34a;     /* Green for Entry */
+    --status-exit: #2563eb;      /* Blue for Exit (retained for contrast against entry) */
+    --border-color: #e2e8f0;     /* Light gray borders */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.dashboard-container {
+    max-width: 1700px;
+    margin: 0 auto;
+}
+
+/* Header UI */
+.main-header {
+    margin-bottom: 2rem;
+    border-bottom: 3px solid var(--accent-green);
+    padding-bottom: 1rem;
+}
+
+.header-split-inline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.main-header h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.5px;
+    color: var(--accent-green);
+    font-weight: 700;
+}
+
+.main-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+.nav-action-btn {
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.6rem 1.2rem;
+    border: 2px solid var(--accent-green);
+    color: var(--accent-green);
+    background-color: transparent;
+    font-weight: 700;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.nav-action-btn:hover {
+    background-color: var(--accent-green) !important;
+    color: #ffffff !important;
+}
+
+/* Hidden Scanner Input Listener */
+#scanner-input {
+    position: absolute;
+    opacity: 0.01;
+    top: 0;
+    left: 0;
+}
+
+/* Main Dashboard Grid - FIXED to occupy maximum workspace layout display width */
+.grid-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+    width: 100%;
+}
+
+.card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom Inline Layout for Table Header and Date Selection Group */
+.logs-header-inline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.logs-header-inline h2 {
+    font-size: 1.2rem;
+    color: var(--accent-green);
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-green);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+/* Date Selector Interactive Elements */
+.date-selector-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.date-selector-group select, 
+.date-selector-group input[type="date"] {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+    background-color: #f1f5f9;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.date-selector-group select:focus,
+.date-selector-group input[type="date"]:focus {
+    border-color: var(--accent-green);
+}
+
+/* Dynamic Calendar UI Visibility Toggles */
+.hidden-date-picker {
+    display: none;
+}
+
+.hidden-date-picker.visible {
+    display: inline-block;
+}
+
+/* Live Scan Panel - Dynamic Heartbeat Pulse */
+.status-badge {
+    background-color: rgba(21, 128, 61, 0.1); 
+    color: var(--accent-green);
+    text-align: center;
+    padding: 1rem;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border: 2px solid var(--accent-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.status-badge::before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: var(--accent-green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-green);
+}
+
+@keyframes pulseGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.4);
+        background-color: rgba(21, 128, 61, 0.05);
+    }
+    50% {
+        box-shadow: 0 0 15px 3px rgba(21, 128, 61, 0.2);
+        background-color: rgba(21, 128, 61, 0.15);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(21, 128, 61, 0.4);
+        background-color: rgba(21, 128, 61, 0.05);
+    }
+}
+
+/* Structural container for profile tags */
+.detail-group {
+    margin-bottom: 1.2rem;
+}
+
+.detail-group label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+}
+
+/* UNIFIED EXTRA LUXURIOUS BADGE DESIGN */
+.live-data-badge {
+    display: block;
+    width: 100%;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--accent-green);
+    background-color: rgba(21, 128, 61, 0.05); 
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid rgba(21, 128, 61, 0.15); 
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.01);
+}
+
+.text-mono {
+    font-family: monospace !important;
+    letter-spacing: 1px;
+}
+
+/* Ledger Attendance Table - FIXED wrapper viewport height constraints */
+.table-wrapper {
+    overflow-x: auto;
+    max-height: 650px;
+    width: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th, td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.85rem; 
+    vertical-align: middle;
+    white-space: normal; /* FIXED: Overrides squeeze anomalies, allowing addresses to wrap text lines naturally */
+}
+
+th {
+    background-color: #f1f5f9;
+    color: var(--text-muted);
+    font-weight: 600;
+    position: sticky;
+    top: 0; 
+    white-space: nowrap; /* Forces layout headers to remain clean on one line */
+}
+
+tr:hover {
+    background-color: #f8fafc;
+}
+
+.strong-text {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.table-id {
+    font-family: monospace;
+    background-color: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+/* Clean, modern styling tags for Barangay Sectors inside the list */
+.sector-tag {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.5rem;
+    border-radius: 20px;
+    background-color: #e2e8f0;
+    color: var(--text-muted);
+}
+.sector-tag.senior { background-color: #ffedd5; color: #ea580c; }
+.sector-tag.youth { background-color: #e0f2fe; color: #0369a1; }
+
+/* Status Badges */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.badge.entry {
+    background-color: rgba(22, 163, 74, 0.15);
+    color: var(--status-entry);
+    border: 1px solid var(--status-entry);
+}
+
+.badge.exit {
+    background-color: rgba(37, 99, 235, 0.15);
+    color: var(--status-exit);
+    border: 1px solid var(--status-exit);
+}
+
+/* ==========================================================================
+   AVATAR FEATURE EXTENSION GRAPHICS STYLES
+   ========================================================================== */
+.profile-avatar-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.live-scan-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent-green);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    background-color: #e2e8f0;
+}
+
+.table-inline-profile-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-row-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    background-color: #e2e8f0;
+}

@@ -1,0 +1,243 @@
+/* ==========================================================================
+   RESIDENT REGISTRATION FORM INTERFACE STYLING 
+   ========================================================================== */
+
+.nav-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: var(--accent-green);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+}
+
+.nav-link:hover {
+    opacity: 0.8;
+}
+
+.registration-layout {
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+.form-card {
+    border-top: 5px solid var(--accent-green);
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-row-two-col {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.65rem 0.8rem;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    background-color: #f8fafc;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent-green);
+}
+
+/* Split Panel Wrapper Layout for Avatar + Upload button elements */
+.registration-split-panel {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 2rem;
+    margin-bottom: 1.25rem;
+    align-items: center;
+    background-color: #f8fafc;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.register-avatar-preview {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--accent-green);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    background-color: #e2e8f0;
+    margin: 0 auto;
+    display: block;
+}
+
+/* Custom Styled File Picker Button */
+.file-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.file-upload-label-btn {
+    display: inline-block;
+    padding: 0.6rem 1rem;
+    background-color: #ffffff;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-upload-label-btn:hover {
+    border-color: var(--accent-green);
+    background-color: rgba(21, 128, 61, 0.02);
+}
+
+/* Hide the ugly standard browser file chooser text box input safely */
+#reg-file-chooser {
+    display: none;
+}
+
+/* Wristband Assignment Block Styling */
+.wristband-assignment-box {
+    background-color: #f1f5f9;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative; 
+}
+
+.wristband-assignment-box label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    margin-bottom: 0.5rem;
+}
+
+.assignment-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Hidden Automated Input Receiver Box */
+#reg-wristband-id {
+    position: absolute;
+    opacity: 0.01;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 1px;
+    height: 1px;
+}
+
+/* Visual Placeholder Slot replacing old manual layout text box views */
+.captured-id-display {
+    margin-top: 0.75rem;
+    padding: 0.65rem 0.8rem;
+    font-size: 0.95rem;
+    background-color: #e2e8f0;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-main);
+    font-family: monospace;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+/* Status Indicators */
+.status-indicator {
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+}
+
+.status-indicator.waiting {
+    background-color: #cbd5e1;
+    color: #475569;
+}
+
+.status-indicator.active-listening {
+    background-color: #fef08a;
+    color: #a16207;
+    animation: pulseGlow 1.5s infinite ease-in-out;
+}
+
+.status-indicator.linked {
+    background-color: #dcfce7;
+    color: var(--status-entry);
+}
+
+/* Interactive Active Laser Scan Zones */
+.focused-zone {
+    border-color: var(--accent-green);
+    background-color: rgba(21, 128, 61, 0.05);
+    box-shadow: 0 0 10px rgba(21, 128, 61, 0.1);
+}
+
+/* Operational Button Classes */
+.btn-primary, .btn-secondary {
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: opacity 0.2s, background-color 0.2s;
+}
+
+.btn-primary {
+    display: block;
+    width: 100%;
+    padding: 0.85rem;
+    background-color: var(--accent-green);
+    color: white;
+    border: none;
+}
+
+.btn-primary:disabled {
+    background-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    padding: 0.5rem 1rem;
+    background-color: white;
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+}
+
+.btn-primary:not(:disabled):hover,
+.btn-secondary:hover {
+    opacity: 0.9;
+    background-color: #f8fafc;
+}
+
+.btn-primary:not(:disabled):hover {
+    background-color: #166534;
+}

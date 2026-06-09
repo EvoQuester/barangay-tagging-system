@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Resident Registration</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="register-style.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <header class="main-header">
+            <h1>BARANGAY RESIDENT REGISTRATION SYSTEM</h1>
+            <p>Encode New Resident Profiles and Assign Unique Wristband IDs</p>
+            <a href="index.html" class="nav-link">← Back to Live Attendance Dashboard</a>
+        </header>
+
+        <div class="registration-layout" style="max-width: 750px;">
+            <section class="card form-card">
+                <h2>New Resident Information Form</h2>
+                
+                <form id="registration-form" autocomplete="off">
+                    
+                    <div class="form-group">
+                        <label for="reg-name">Full Name (Last Name, First Name, M.I.)</label>
+                        <input type="text" id="reg-name" required placeholder="e.g., Dela Cruz, Juan R.">
+                    </div>
+
+                    <div class="form-row-two-col">
+                        <div class="form-group">
+                            <label for="reg-age">Resident Age</label>
+                            <input type="number" id="reg-age" required min="0" max="120" placeholder="e.g., 28">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reg-sector">Sector Classification</label>
+                            <select id="reg-sector" required>
+                                <option value="" disabled selected>Select sector group...</option>
+                                <option value="General Resident">General Resident</option>
+                                <option value="PWD">PWD (Persons with Disabilities)</option>
+                                <option value="Senior Citizen">Senior Citizen</option>
+                                <option value="Solo Parent">Solo Parent</option>
+                                <option value="Youth / SK">Youth / SK (Sangguniang Kabataan)</option>
+                                <option value="Indigent / 4Ps">Indigent / 4Ps Beneficiary</option>
+                                <option value="BHW / Staff">Barangay Health Worker (BHW) / Staff</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="registration-split-panel">
+                        <div>
+                            <img id="reg-avatar-render" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Avatar Preview" class="register-avatar-preview">
+                        </div>
+                        <div class="file-upload-wrapper">
+                            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Resident Photo Image</label>
+                            
+                            <label for="reg-file-chooser" class="file-upload-label-btn">📁 Choose Photo Image from Desktop</label>
+                            <input type="file" id="reg-file-chooser" accept="image/*">
+                            
+                            <span id="file-chosen-status" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No file selected (using default template profile)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-address">Complete Address (Sitio/Purok/Street)</label>
+                        <input type="text" id="reg-address" required placeholder="e.g., Purok 3, Avocado Street">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-emergency">Emergency Contact (Name & Active Number)</label>
+                        <input type="text" id="reg-emergency" required placeholder="e.g., Maria Dela Cruz - 0917XXXXXXX">
+                    </div>
+
+                    <div class="wristband-assignment-box" id="scanner-zone">
+                        <label>Wristband Hardware Link</label>
+                        <div class="assignment-controls">
+                            <button type="button" id="activate-scan-btn" class="btn-secondary">Click & Scan Wristband QR</button>
+                            <span id="scan-status-text" class="status-indicator waiting">No ID Linked Yet</span>
+                        </div>
+                        
+                        <input type="text" id="reg-wristband-id" autocomplete="off" placeholder="Awaiting hardware pulse...">
+                        <div id="visual-id-display" class="captured-id-display">Awaiting hardware pulse injection...</div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="submit-form-btn" disabled>Save & Register Resident</button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registration-form');
+        const activateScanBtn = document.getElementById('activate-scan-btn');
+        const wristbandInput = document.getElementById('reg-wristband-id');
+        const scanStatusText = document.getElementById('scan-status-text');
+        const visualIdDisplay = document.getElementById('visual-id-display');
+        const submitFormBtn = document.getElementById('submit-form-btn');
+        const scannerZone = document.getElementById('scanner-zone');
+        
+        // Image Upload Control Targets
+        const fileChooser = document.getElementById('reg-file-chooser');
+        const avatarRender = document.getElementById('reg-avatar-render');
+        const fileChosenStatus = document.getElementById('file-chosen-status');
+
+        const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
+        let convertedBase64ImageString = ""; 
+
+        /* ==========================================================================
+           DESKTOP FILE SELECTION INTERCEPTION LOGIC
+           ========================================================================== */
+        fileChooser.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+
+            // Update status text on screen
+            fileChosenStatus.textContent = `Selected: ${file.name}`;
+
+            // Initialize the high-level JavaScript FileReader API
+            const reader = new FileReader();
+            
+            // Fires automatically once file translation completes
+            reader.onload = function(e) {
+                convertedBase64ImageString = e.target.result; // long textual format of image data
+                avatarRender.src = convertedBase64ImageString; // swap preview instantly!
+            };
+
+            // Read the binary desktop file block and convert it to Base64 data string
+            reader.readAsDataURL(file);
+        });
+
+        /* ==========================================================================
+           HARDWARE AUTOMATED LOOKUP KEY INTERCEPTORS
+           ========================================================================== */
+        activateScanBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            wristbandInput.value = ""; 
+            visualIdDisplay.textContent = "Awaiting hardware pulse injection...";
+            wristbandInput.focus();
+            scanStatusText.textContent = "Listening for Hardware Scan...";
+            scanStatusText.className = "status-indicator active-listening";
+            scannerZone.classList.add('focused-zone');
+        });
+
+        wristbandInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                
+                const scannedText = this.value.trim();
+                if (scannedText !== "") {
+                    scanStatusText.textContent = "ID Linked!";
+                    scanStatusText.className = "status-indicator linked";
+                    scannerZone.classList.remove('focused-zone');
+                    visualIdDisplay.textContent = scannedText;
+                    submitFormBtn.removeAttribute('disabled');
+                }
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (scanStatusText.classList.contains('active-listening')) {
+                const clickInsideZone = scannerZone.contains(e.target);
+                const isClickingOtherInput = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT';
+
+                if (!clickInsideZone && !isClickingOtherInput) {
+                    wristbandInput.focus();
+                }
+            }
+        });
+
+        /* ==========================================================================
+           POST API PAYLOAD DISPATCH ROUTINE
+           ========================================================================== */
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const registrationData = {
+                name: document.getElementById('reg-name').value,
+                age: document.getElementById('reg-age').value,
+                sector: document.getElementById('reg-sector').value,
+                address: document.getElementById('reg-address').value,
+                emergency_contact: document.getElementById('reg-emergency').value,
+                linked_qr_id: wristbandInput.value,
+                profile_pic: convertedBase64ImageString // Sends string directly into the database text block
+            };
+
+            fetch('/api/residents/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(registrationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`✅ SUCCESS!\nResident profiles completely saved to database.\nLinked Unique ID: ${wristbandInput.value}`);
+                    
+                    form.reset();
+                    convertedBase64ImageString = ""; // Clear string container
+                    avatarRender.src = DEFAULT_SVG;
+                    fileChosenStatus.textContent = "No file selected (using default template profile)";
+                    visualIdDisplay.textContent = "Awaiting hardware pulse injection...";
+                    scanStatusText.textContent = "No ID Linked Yet";
+                    scanStatusText.className = "status-indicator waiting";
+                    submitFormBtn.setAttribute('disabled', 'true');
+                } else {
+                    alert('⚠️ REGISTRATION FAILED:\n' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error('API connection failure:', err);
+                alert('Network Error: Make sure your Node.js server engine is running active.');
+            });
+        });
+    </script>
+</body>
+</html>

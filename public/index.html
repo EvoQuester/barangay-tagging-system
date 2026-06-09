@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Access Control System</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS Patch: Keeps our hidden automated interceptor locked down tightly */
+        #scanner-input {
+            position: absolute;
+            opacity: 0.001;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 1px;
+            z-index: -999;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <header class="main-header">
+            <div class="header-split-inline">
+                <div>
+                    <h1>BARANGAY ACCESS CONTROL & ATTENDANCE SYSTEM</h1>
+                    <p>Localized Secure Network Monitoring Dashboard</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <a href="profile.html" class="btn-secondary nav-action-btn" style="border-color: #64748b; color: #64748b;">👤 Resident Profiles</a>
+                    <a href="register.html" class="btn-secondary nav-action-btn" id="nav-register-btn">➕ Register New Resident</a>
+                </div>
+            </div>
+        </header>
+
+        <input type="text" id="scanner-input" autofocus autocomplete="off" placeholder="Ready for scan...">
+
+        <div class="grid-layout">
+            
+            <section class="card scan-result-card" id="scan-card">
+                <h2>Live Scan Status</h2>
+                <div class="status-badge" id="status-badge">READY TO SCAN</div>
+                
+                <div class="profile-avatar-container">
+                    <img id="res-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Resident Avatar" class="live-scan-avatar">
+                </div>
+
+                <div class="profile-details">
+                    <div class="detail-group">
+                        <label>Barangay Unique ID:</label>
+                        <span id="res-id" class="live-data-badge text-mono">---</span>
+                    </div>
+                    <div class="detail-group">
+                        <label>Resident Name:</label>
+                        <span id="res-name" class="live-data-badge">---</span>
+                    </div>
+                    <div class="detail-group">
+                        <label>Resident Age:</label>
+                        <span id="res-age" class="live-data-badge">---</span>
+                    </div>
+                    <div class="detail-group">
+                        <label>Sector Classification:</label>
+                        <span id="res-sector" class="live-data-badge">---</span>
+                    </div>
+                    <div class="detail-group">
+                        <label>Address:</label>
+                        <span id="res-address" class="live-data-badge">---</span>
+                    </div>
+                    <div class="detail-group">
+                        <label>Emergency Contact:</label>
+                        <span id="res-emergency" class="live-data-badge">---</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card logs-card">
+                <div class="logs-header-inline">
+                    <h2>Attendance Log Ledger</h2>
+                    
+                    <div class="date-selector-group" id="date-controls-container">
+                        <select id="quick-date-select">
+                            <option value="today" selected>Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="custom">Custom Date...</option>
+                        </select>
+                        <input type="date" id="calendar-input" class="hidden-date-picker">
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Unique ID</th>
+                                <th>Resident Profile Info</th>
+                                <th>Age</th>
+                                <th>Sector</th>
+                                <th>Address</th>
+                                <th>Emergency Contact</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        const scanInput = document.getElementById('scanner-input');
+        const quickDateSelect = document.getElementById('quick-date-select');
+        const calendarInput = document.getElementById('calendar-input');
+        const dateControlsContainer = document.getElementById('date-controls-container');
+        const navRegisterBtn = document.getElementById('nav-register-btn');
+
+        const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
+
+        const todayStr = new Date().toLocaleDateString('en-CA'); 
+        calendarInput.value = todayStr;
+        
+        function keepScannerFocused() {
+            if (document.activeElement !== calendarInput && document.activeElement !== quickDateSelect) {
+                scanInput.focus();
+            }
+        }
+
+        scanInput.focus();
+
+        document.addEventListener('click', (e) => {
+            setTimeout(keepScannerFocused, 50);
+        });
+
+        quickDateSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                calendarInput.classList.add('visible');
+                calendarInput.focus(); 
+            } else {
+                calendarInput.classList.remove('visible');
+                
+                if (this.value === 'today') {
+                    calendarInput.value = todayStr;
+                } else if (this.value === 'yesterday') {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    calendarInput.value = yesterday.toLocaleDateString('en-CA');
+                }
+                loadLogsForSelectedDate();
+                setTimeout(keepScannerFocused, 50);
+            }
+        });
+
+        calendarInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                loadLogsForSelectedDate();
+                setTimeout(keepScannerFocused, 50);
+            }
+        });
+
+        /* ==========================================================================
+           LIVE SCANNED DATA INTERCEPTION LINK
+           ========================================================================== */
+        scanInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const scannedId = this.value.trim();
+                this.value = ''; 
+                
+                if (!scannedId) return;
+
+                fetch('/api/attendance/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scanned_id: scannedId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('status-badge');
+                    
+                    if (data.success) {
+                        document.getElementById('res-pic').src = data.resident.picture;
+                        document.getElementById('res-id').textContent = data.resident.id;
+                        document.getElementById('res-name').textContent = data.resident.name;
+                        document.getElementById('res-age').textContent = data.resident.age;
+                        document.getElementById('res-sector').textContent = data.resident.sector;
+                        document.getElementById('res-address').textContent = data.resident.address;
+                        document.getElementById('res-emergency').textContent = data.resident.emergency;
+
+                        badge.textContent = `ACCESS GRANTED: ${data.action}`;
+                        
+                        if (data.action === 'ENTRY') {
+                            badge.style.borderColor = 'var(--status-entry)';
+                            badge.style.color = 'var(--status-entry)';
+                            badge.style.backgroundColor = 'rgba(22, 163, 74, 0.1)';
+                        } else {
+                            badge.style.borderColor = 'var(--status-exit)';
+                            badge.style.color = 'var(--status-exit)';
+                            badge.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
+                        }
+
+                        loadLogsForSelectedDate();
+                    } else {
+                        badge.textContent = data.message;
+                        badge.style.borderColor = '#dc2626';
+                        badge.style.color = '#dc2626';
+                        badge.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
+                        
+                        document.getElementById('res-pic').src = DEFAULT_SVG;
+                        document.getElementById('res-id').textContent = '---';
+                        document.getElementById('res-name').textContent = '---';
+                        document.getElementById('res-age').textContent = '---';
+                        document.getElementById('res-sector').textContent = '---';
+                        document.getElementById('res-address').textContent = '---';
+                        document.getElementById('res-emergency').textContent = '---';
+                    }
+                })
+                .catch(err => console.error('Scanning engine link breakdown:', err));
+            }
+        });
+
+        /* ==========================================================================
+           DATABASE REPAINT CONTROLLER LOGIC (WITH INTEGRATED AVATARS)
+           ========================================================================== */
+        function loadLogsForSelectedDate() {
+            const targetDate = calendarInput.value;
+            fetch(`/api/attendance/logs?date=${targetDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const tbody = document.getElementById('logs-table-body');
+                        tbody.innerHTML = ''; 
+
+                        if (data.logs.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding: 2rem;">No logs registered for this calendar date.</td></tr>';
+                            return;
+                        }
+
+                        data.logs.forEach(log => {
+                            const formattedTime = new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            
+                            let sectorClass = '';
+                            const cleanSector = log.sector.toLowerCase();
+                            if (cleanSector.includes('senior')) sectorClass = 'senior';
+                            else if (cleanSector.includes('youth') || cleanSector.includes('sk')) sectorClass = 'youth';
+
+                            const actionBadge = log.action === 'ENTRY' 
+                                ? '<span class="badge entry">ENTRY</span>' 
+                                : '<span class="badge exit">EXIT</span>';
+
+                            const rowHTML = `
+                                <tr>
+                                    <td>${formattedTime}</td>
+                                    <td><code class="table-id">${log.wristband_id}</code></td>
+                                    <td>
+                                        <div class="table-inline-profile-cell">
+                                            <img src="${log.profile_pic || DEFAULT_SVG}" alt="Avatar" class="table-row-avatar">
+                                            <span class="strong-text">${log.full_name}</span>
+                                        </div>
+                                    </td>
+                                    <td>${log.age}</td>
+                                    <td><span class="sector-tag ${sectorClass}">${log.sector}</span></td>
+                                    <td>${log.complete_address}</td>
+                                    <td>${log.emergency_contact}</td>
+                                    <td>${actionBadge}</td>
+                                </tr>
+                            `;
+                            tbody.insertAdjacentHTML('beforeend', rowHTML);
+                        });
+                    }
+                })
+                .catch(err => console.error('Failed to retrieve logs:', err));
+        }
+
+        calendarInput.addEventListener('change', loadLogsForSelectedDate);
+        window.addEventListener('DOMContentLoaded', loadLogsForSelectedDate);
+    </script>
+</body>
+</html>
