@@ -6,7 +6,6 @@
     <title>Barangay Access Control System</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* CSS Patch: Keeps our hidden automated interceptor locked down tightly */
         #scanner-input {
             position: absolute;
             opacity: 0.001;
@@ -45,7 +44,7 @@
                 <div class="status-badge" id="status-badge">READY TO SCAN</div>
                 
                 <div class="profile-avatar-container">
-                    <img id="res-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Resident Avatar" class="live-scan-avatar">
+                    <img id="res-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Resident Avatar" class="live-scan-avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2394a3b8\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z\'/></svg>'">
                 </div>
 
                 <div class="profile-details">
@@ -117,11 +116,8 @@
         const scanInput = document.getElementById('scanner-input');
         const quickDateSelect = document.getElementById('quick-date-select');
         const calendarInput = document.getElementById('calendar-input');
-        const dateControlsContainer = document.getElementById('date-controls-container');
-        const navRegisterBtn = document.getElementById('nav-register-btn');
-
+        
         const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
-
         const todayStr = new Date().toLocaleDateString('en-CA'); 
         calendarInput.value = todayStr;
         
@@ -130,12 +126,8 @@
                 scanInput.focus();
             }
         }
-
         scanInput.focus();
-
-        document.addEventListener('click', (e) => {
-            setTimeout(keepScannerFocused, 50);
-        });
+        document.addEventListener('click', () => setTimeout(keepScannerFocused, 50));
 
         quickDateSelect.addEventListener('change', function() {
             if (this.value === 'custom') {
@@ -143,10 +135,8 @@
                 calendarInput.focus(); 
             } else {
                 calendarInput.classList.remove('visible');
-                
-                if (this.value === 'today') {
-                    calendarInput.value = todayStr;
-                } else if (this.value === 'yesterday') {
+                if (this.value === 'today') calendarInput.value = todayStr;
+                else if (this.value === 'yesterday') {
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
                     calendarInput.value = yesterday.toLocaleDateString('en-CA');
@@ -163,14 +153,10 @@
             }
         });
 
-        /* ==========================================================================
-           LIVE SCANNED DATA INTERCEPTION LINK
-           ========================================================================== */
         scanInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const scannedId = this.value.trim();
                 this.value = ''; 
-                
                 if (!scannedId) return;
 
                 fetch('/api/attendance/scan', {
@@ -181,10 +167,13 @@
                 .then(response => response.json())
                 .then(data => {
                     const badge = document.getElementById('status-badge');
-                    
                     if (data.success) {
-                        document.getElementById('res-pic').src = data.resident.picture;
-                        document.getElementById('res-id').textContent = data.resident.id;
+                        let cleanPic = DEFAULT_SVG;
+                        if (data.resident.picture && data.resident.picture.trim().startsWith("data:image")) {
+                            cleanPic = data.resident.picture.trim();
+                        }
+                        document.getElementById('res-pic').src = cleanPic;
+                        document.getElementById('res-id').textContent = data.resident.id; 
                         document.getElementById('res-name').textContent = data.resident.name;
                         document.getElementById('res-age').textContent = data.resident.age;
                         document.getElementById('res-sector').textContent = data.resident.sector;
@@ -192,17 +181,9 @@
                         document.getElementById('res-emergency').textContent = data.resident.emergency;
 
                         badge.textContent = `ACCESS GRANTED: ${data.action}`;
-                        
-                        if (data.action === 'ENTRY') {
-                            badge.style.borderColor = 'var(--status-entry)';
-                            badge.style.color = 'var(--status-entry)';
-                            badge.style.backgroundColor = 'rgba(22, 163, 74, 0.1)';
-                        } else {
-                            badge.style.borderColor = 'var(--status-exit)';
-                            badge.style.color = 'var(--status-exit)';
-                            badge.style.backgroundColor = 'rgba(37, 99, 235, 0.1)';
-                        }
-
+                        badge.style.borderColor = data.action === 'ENTRY' ? 'var(--status-entry)' : 'var(--status-exit)';
+                        badge.style.color = data.action === 'ENTRY' ? 'var(--status-entry)' : 'var(--status-exit)';
+                        badge.style.backgroundColor = data.action === 'ENTRY' ? 'rgba(22, 163, 74, 0.1)' : 'rgba(37, 99, 235, 0.1)';
                         loadLogsForSelectedDate();
                     } else {
                         badge.textContent = data.message;
@@ -223,9 +204,6 @@
             }
         });
 
-        /* ==========================================================================
-           DATABASE REPAINT CONTROLLER LOGIC (WITH INTEGRATED AVATARS)
-           ========================================================================== */
         function loadLogsForSelectedDate() {
             const targetDate = calendarInput.value;
             fetch(`/api/attendance/logs?date=${targetDate}`)
@@ -242,23 +220,28 @@
 
                         data.logs.forEach(log => {
                             const formattedTime = new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                            
-                            let sectorClass = '';
-                            const cleanSector = log.sector.toLowerCase();
-                            if (cleanSector.includes('senior')) sectorClass = 'senior';
-                            else if (cleanSector.includes('youth') || cleanSector.includes('sk')) sectorClass = 'youth';
+                            let sectorClass = log.sector.toLowerCase().includes('senior') ? 'senior' : (log.sector.toLowerCase().includes('youth') ? 'youth' : '');
+                            const actionBadge = log.action === 'ENTRY' ? '<span class="badge entry">ENTRY</span>' : '<span class="badge exit">EXIT</span>';
 
-                            const actionBadge = log.action === 'ENTRY' 
-                                ? '<span class="badge entry">ENTRY</span>' 
-                                : '<span class="badge exit">EXIT</span>';
+                            // 🛡️ SANITIZATION SYSTEM GATE CHECK
+                            let cleanImageSrc = DEFAULT_SVG;
+                            if (
+                                log.profile_pic && 
+                                log.profile_pic.trim() !== "" && 
+                                log.profile_pic.startsWith("data:image") && 
+                                !log.profile_pic.includes('"') && 
+                                !log.profile_pic.includes("'")
+                            ) {
+                                cleanImageSrc = log.profile_pic.trim();
+                            }
 
                             const rowHTML = `
                                 <tr>
                                     <td>${formattedTime}</td>
-                                    <td><code class="table-id">${log.wristband_id}</code></td>
+                                    <td><code class="table-id">${log.resident_id}</code></td>
                                     <td>
                                         <div class="table-inline-profile-cell">
-                                            <img src="${log.profile_pic || DEFAULT_SVG}" alt="Avatar" class="table-row-avatar">
+                                            <img src="${cleanImageSrc}" alt="Avatar" class="table-row-avatar" onerror="this.src='${DEFAULT_SVG}'">
                                             <span class="strong-text">${log.full_name}</span>
                                         </div>
                                     </td>

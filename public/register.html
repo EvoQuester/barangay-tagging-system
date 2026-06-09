@@ -13,7 +13,7 @@
         
         <header class="main-header">
             <h1>BARANGAY RESIDENT REGISTRATION SYSTEM</h1>
-            <p>Encode New Resident Profiles and Assign Unique Wristband IDs</p>
+            <p>Encode New Resident Profiles and Assign Unique QR Tokens</p>
             <a href="index.html" class="nav-link">← Back to Live Attendance Dashboard</a>
         </header>
 
@@ -55,10 +55,8 @@
                         </div>
                         <div class="file-upload-wrapper">
                             <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Resident Photo Image</label>
-                            
                             <label for="reg-file-chooser" class="file-upload-label-btn">📁 Choose Photo Image from Desktop</label>
                             <input type="file" id="reg-file-chooser" accept="image/*">
-                            
                             <span id="file-chosen-status" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No file selected (using default template profile)</span>
                         </div>
                     </div>
@@ -74,14 +72,15 @@
                     </div>
 
                     <div class="wristband-assignment-box" id="scanner-zone">
-                        <label>Wristband Hardware Link</label>
+                        <label>Custom QR Payload Text String</label>
+                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">Residents can use any text choice via custom creators. The system auto-assigns sequential serial IDs behind the scenes.</p>
                         <div class="assignment-controls">
-                            <button type="button" id="activate-scan-btn" class="btn-secondary">Click & Scan Wristband QR</button>
+                            <button type="button" id="activate-scan-btn" class="btn-secondary">Click & Scan Custom QR Code</button>
                             <span id="scan-status-text" class="status-indicator waiting">No ID Linked Yet</span>
                         </div>
                         
                         <input type="text" id="reg-wristband-id" autocomplete="off" placeholder="Awaiting hardware pulse...">
-                        <div id="visual-id-display" class="captured-id-display">Awaiting hardware pulse injection...</div>
+                        <div id="visual-id-display" class="captured-id-display">Awaiting input token text string...</div>
                     </div>
 
                     <button type="submit" class="btn-primary" id="submit-form-btn" disabled>Save & Register Resident</button>
@@ -98,8 +97,6 @@
         const visualIdDisplay = document.getElementById('visual-id-display');
         const submitFormBtn = document.getElementById('submit-form-btn');
         const scannerZone = document.getElementById('scanner-zone');
-        
-        // Image Upload Control Targets
         const fileChooser = document.getElementById('reg-file-chooser');
         const avatarRender = document.getElementById('reg-avatar-render');
         const fileChosenStatus = document.getElementById('file-chosen-status');
@@ -107,38 +104,24 @@
         const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
         let convertedBase64ImageString = ""; 
 
-        /* ==========================================================================
-           DESKTOP FILE SELECTION INTERCEPTION LOGIC
-           ========================================================================== */
         fileChooser.addEventListener('change', function() {
             const file = this.files[0];
             if (!file) return;
-
-            // Update status text on screen
             fileChosenStatus.textContent = `Selected: ${file.name}`;
-
-            // Initialize the high-level JavaScript FileReader API
             const reader = new FileReader();
-            
-            // Fires automatically once file translation completes
             reader.onload = function(e) {
-                convertedBase64ImageString = e.target.result; // long textual format of image data
-                avatarRender.src = convertedBase64ImageString; // swap preview instantly!
+                convertedBase64ImageString = e.target.result;
+                avatarRender.src = convertedBase64ImageString;
             };
-
-            // Read the binary desktop file block and convert it to Base64 data string
             reader.readAsDataURL(file);
         });
 
-        /* ==========================================================================
-           HARDWARE AUTOMATED LOOKUP KEY INTERCEPTORS
-           ========================================================================== */
         activateScanBtn.addEventListener('click', (e) => {
             e.stopPropagation(); 
             wristbandInput.value = ""; 
-            visualIdDisplay.textContent = "Awaiting hardware pulse injection...";
+            visualIdDisplay.textContent = "Awaiting input token text string...";
             wristbandInput.focus();
-            scanStatusText.textContent = "Listening for Hardware Scan...";
+            scanStatusText.textContent = "Listening for Scan...";
             scanStatusText.className = "status-indicator active-listening";
             scannerZone.classList.add('focused-zone');
         });
@@ -146,10 +129,9 @@
         wristbandInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault(); 
-                
                 const scannedText = this.value.trim();
                 if (scannedText !== "") {
-                    scanStatusText.textContent = "ID Linked!";
+                    scanStatusText.textContent = "Payload Linked!";
                     scanStatusText.className = "status-indicator linked";
                     scannerZone.classList.remove('focused-zone');
                     visualIdDisplay.textContent = scannedText;
@@ -160,18 +142,12 @@
 
         document.addEventListener('click', (e) => {
             if (scanStatusText.classList.contains('active-listening')) {
-                const clickInsideZone = scannerZone.contains(e.target);
-                const isClickingOtherInput = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT';
-
-                if (!clickInsideZone && !isClickingOtherInput) {
+                if (!scannerZone.contains(e.target) && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
                     wristbandInput.focus();
                 }
             }
         });
 
-        /* ==========================================================================
-           POST API PAYLOAD DISPATCH ROUTINE
-           ========================================================================== */
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -182,7 +158,7 @@
                 address: document.getElementById('reg-address').value,
                 emergency_contact: document.getElementById('reg-emergency').value,
                 linked_qr_id: wristbandInput.value,
-                profile_pic: convertedBase64ImageString // Sends string directly into the database text block
+                profile_pic: convertedBase64ImageString
             };
 
             fetch('/api/residents/register', {
@@ -193,13 +169,12 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(`✅ SUCCESS!\nResident profiles completely saved to database.\nLinked Unique ID: ${wristbandInput.value}`);
-                    
+                    alert(`✅ REGISTERED SUCCESSFULLY!\nInternal system key assigned: ${data.resident_id}\nCustom QR text string mapping bound: ${wristbandInput.value}`);
                     form.reset();
-                    convertedBase64ImageString = ""; // Clear string container
+                    convertedBase64ImageString = ""; 
                     avatarRender.src = DEFAULT_SVG;
                     fileChosenStatus.textContent = "No file selected (using default template profile)";
-                    visualIdDisplay.textContent = "Awaiting hardware pulse injection...";
+                    visualIdDisplay.textContent = "Awaiting input token text string...";
                     scanStatusText.textContent = "No ID Linked Yet";
                     scanStatusText.className = "status-indicator waiting";
                     submitFormBtn.setAttribute('disabled', 'true');

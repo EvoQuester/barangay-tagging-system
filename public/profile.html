@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="register-style.css">
     <style>
-        /* CSS Patch for the Profile Search hidden listener field */
         #profile-scanner-input {
             position: absolute;
             opacity: 0.001;
@@ -46,8 +45,6 @@
             justify-content: space-between;
             align-items: center;
         }
-        
-        /* Layout adjustments for inline file selection styling on this grid */
         .profile-file-upload-container {
             margin-top: 1rem;
             display: flex;
@@ -74,7 +71,7 @@
         
         <header class="main-header">
             <h1>BARANGAY RESIDENT PROFILE MANAGER</h1>
-            <p>Look Up, Update Core Information, and Upload Photo Images from Desktop</p>
+            <p>Look Up and Update Core Information via Master Index System</p>
             <a href="index.html" class="nav-link">← Back to Live Attendance Dashboard</a>
         </header>
 
@@ -84,7 +81,7 @@
             
             <div class="search-indicator-box" id="search-zone">
                 <span style="font-weight: 700; font-size: 0.9rem; color: var(--text-muted);">
-                    🔒 Automatic Mode: Wave Wristband or Click Lookup to Search
+                    🔒 Automatic Mode: Wave Card or Type System ID to Search
                 </span>
                 <span id="lookup-status-text" class="status-indicator active-listening">Listening for Scan...</span>
             </div>
@@ -101,7 +98,7 @@
                                 Profile Photo
                             </label>
                             <img id="edit-avatar-preview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Avatar Preview">
-                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; font-family:monospace;" id="edit-id-label">ID: ---</p>
+                            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; font-family:monospace;" id="edit-id-label">System ID: ---</p>
                             
                             <div class="profile-file-upload-container">
                                 <label>Modify Image File</label>
@@ -162,8 +159,6 @@
         const lookupStatusText = document.getElementById('lookup-status-text');
         const searchZone = document.getElementById('search-zone');
         const form = document.getElementById('profile-update-form');
-        
-        // Input Controls array references
         const inputs = [
             document.getElementById('edit-name'),
             document.getElementById('edit-age'),
@@ -171,32 +166,25 @@
             document.getElementById('edit-address'),
             document.getElementById('edit-emergency')
         ];
-        
-        // FIXED: Pointed variable target selector accurately to 'update-form-btn'
         const updateFormBtn = document.getElementById('update-form-btn');
         const avatarPreview = document.getElementById('edit-avatar-preview');
         const idLabel = document.getElementById('edit-id-label');
-        
-        // File Chooser Target Selectors
         const fileChooser = document.getElementById('edit-file-chooser');
         const fileStatus = document.getElementById('edit-file-status');
         const customFileBtnLabel = document.getElementById('custom-file-btn-label');
 
         const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
-        let loadedWristbandId = ""; 
+        let loadedResidentId = ""; 
         let updatedBase64ImageString = ""; 
 
-        // Automated continuous background focus lock
         function keepSearchFocused() {
-            const clickingOtherField = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT';
-            if (!clickingOtherField) {
+            if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') {
                 searchInput.focus();
             }
         }
         searchInput.focus();
         document.addEventListener('click', () => setTimeout(keepSearchFocused, 50));
 
-        // Re-ignite focus when header bar indicator is clicked manually
         searchZone.addEventListener('click', (e) => {
             e.stopPropagation();
             searchInput.focus();
@@ -204,31 +192,22 @@
             lookupStatusText.className = "status-indicator active-listening";
         });
 
-        /* ==========================================================================
-           DESKTOP FILE SELECTION INTERCEPTION LOGIC
-           ========================================================================== */
         fileChooser.addEventListener('change', function() {
             const file = this.files[0];
             if (!file) return;
-
             fileStatus.textContent = `Selected: ${file.name}`;
-
             const reader = new FileReader();
             reader.onload = function(e) {
-                updatedBase64ImageString = e.target.result; // Conversion format string
-                avatarPreview.src = updatedBase64ImageString; // Repaint circle element layout preview frame instantly
+                updatedBase64ImageString = e.target.result;
+                avatarPreview.src = updatedBase64ImageString;
             };
             reader.readAsDataURL(file);
         });
 
-        /* ==========================================================================
-           AUTOMATIC LOOKUP INTERCEPTION SCAN ROUTINE
-           ========================================================================== */
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const searchId = this.value.trim();
                 this.value = ''; 
-                
                 if (!searchId) return;
 
                 lookupStatusText.textContent = "Searching...";
@@ -241,12 +220,11 @@
                         lookupStatusText.textContent = "Profile Loaded!";
                         lookupStatusText.className = "status-indicator linked";
                         
-                        loadedWristbandId = data.resident.wristband_id;
-                        idLabel.textContent = `ID: ${loadedWristbandId}`;
+                        loadedResidentId = data.resident.resident_id; // Clean internal tracking string sequence
+                        idLabel.textContent = `System ID: ${loadedResidentId}`;
                         avatarPreview.src = data.resident.profile_pic || DEFAULT_SVG;
                         updatedBase64ImageString = data.resident.profile_pic || DEFAULT_SVG; 
 
-                        // Unlock input fields and upload triggers
                         inputs.forEach(input => input.removeAttribute('disabled'));
                         fileChooser.removeAttribute('disabled');
                         customFileBtnLabel.classList.remove('disabled-upload-btn');
@@ -268,14 +246,11 @@
             }
         });
 
-        /* ==========================================================================
-           PUT API MODIFICATION PAYLOAD DISPATCH ROUTINE
-           ========================================================================== */
         form.addEventListener('submit', function(e) {
             e.preventDefault(); 
 
             const updatedPayload = {
-                wristband_id: loadedWristbandId,
+                resident_id: loadedResidentId,
                 name: document.getElementById('edit-name').value,
                 age: document.getElementById('edit-age').value,
                 sector: document.getElementById('edit-sector').value,
@@ -293,14 +268,12 @@
             .then(data => {
                 if (data.success) {
                     alert('✅ SUCCESS!\nResident master configuration profile fields updated successfully inside PostgreSQL.');
-                    
                     form.reset();
-                    idLabel.textContent = "ID: ---";
+                    idLabel.textContent = "System ID: ---";
                     avatarPreview.src = DEFAULT_SVG;
                     updatedBase64ImageString = "";
                     fileStatus.textContent = "No file loaded";
                     
-                    // Relock interactive components smoothly
                     inputs.forEach(input => input.setAttribute('disabled', 'true'));
                     fileChooser.setAttribute('disabled', 'true');
                     customFileBtnLabel.classList.add('disabled-upload-btn');
