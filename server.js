@@ -63,10 +63,11 @@ app.post('/api/attendance/scan', async (req, res) => {
         }
         const resident = residentQuery.rows[0];
 
-        // 🟢 BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM (RESETS AUTOMATICALLY AT MIDNIGHT)
+        // 🟢 BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM
         if (system_mode === 'FOOD') {
+            // Checks for claims on the database's current server date
             const foodCheck = await pool.query(
-                'SELECT * FROM food_distribution_logs WHERE resident_id = $1 AND distribution_date = CURRENT_DATE',
+                'SELECT * FROM food_distribution_logs WHERE resident_id = $1 AND DATE(claimed_at) = CURRENT_DATE',
                 [resident.resident_id]
             );
 
@@ -79,8 +80,9 @@ app.post('/api/attendance/scan', async (req, res) => {
                 });
             }
 
+            // Database generates the exact timestamp natively upon insert
             await pool.query(
-                'INSERT INTO food_distribution_logs (resident_id, wristband_id) VALUES ($1, $2)',
+                'INSERT INTO food_distribution_logs (resident_id, wristband_id, claimed_at) VALUES ($1, $2, NOW())',
                 [resident.resident_id, resident.wristband_id]
             );
 
@@ -98,9 +100,11 @@ app.post('/api/attendance/scan', async (req, res) => {
             });
         }
 
-        // 🔵 BRANCH A: REGULAR ATTENDANCE ACCESS ROUTINE
+        // 🔵 BRANCH A: REGULAR ATTENDANCE ACCESS ROUTINE (STRICT TOGGLE SEQUENCER)
         const logQuery = await pool.query(
-            'SELECT action FROM attendance_logs WHERE resident_id = $1 ORDER BY timestamp DESC LIMIT 1',
+            `SELECT action FROM attendance_logs 
+             WHERE resident_id = $1 
+             ORDER BY timestamp DESC LIMIT 1`,
             [resident.resident_id]
         );
 
@@ -109,8 +113,9 @@ app.post('/api/attendance/scan', async (req, res) => {
             currentAction = 'EXIT';
         }
 
+        // Database generates the exact timestamp natively upon insert
         await pool.query(
-            'INSERT INTO attendance_logs (resident_id, wristband_id, action) VALUES ($1, $2, $3)',
+            'INSERT INTO attendance_logs (resident_id, wristband_id, action, timestamp) VALUES ($1, $2, $3, NOW())',
             [resident.resident_id, resident.wristband_id, currentAction]
         );
 
