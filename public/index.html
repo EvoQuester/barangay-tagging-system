@@ -188,12 +188,12 @@
                     const yest = new Date(); yest.setDate(yest.getDate() - 1);
                     calendarInput.value = yest.toLocaleDateString('en-CA');
                 }
-                loadLogsForSelectedDate();
+                loadAllLedgerLogs();
                 setTimeout(keepScannerFocused, 50);
             }
         });
 
-        calendarInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { loadLogsForSelectedDate(); setTimeout(keepScannerFocused, 50); } });
+        calendarInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { loadAllLedgerLogs(); setTimeout(keepScannerFocused, 50); } });
 
         scanInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
@@ -232,16 +232,15 @@
 
                         if (data.action === 'FOOD_SERVED') {
                             badge.textContent = `✅ RATION ISSUED SUCCESSFULLY!`;
-                            badge.style.borderColor = '#16a34a'; badge.style.color = '#16a34a'; badge.style.backgroundColor = 'rgba(22,163,74,0.1)';
+                            badge.style.borderColor = '#16a34a'; badge.style.color = '#16a34a'; badge.style.backgroundColor = 'rgba(22, 163, 74, 0.1)';
                         } else {
                             badge.textContent = `ACCESS GRANTED: ${data.action}`;
                             badge.style.borderColor = data.action === 'ENTRY' ? '#16a34a' : '#2563eb';
                             badge.style.color = data.action === 'ENTRY' ? '#16a34a' : '#2563eb';
-                            badge.style.backgroundColor = data.action === 'ENTRY' ? 'rgba(22,163,74,0.1)' : 'rgba(37,99,235,0.1)';
+                            badge.style.backgroundColor = data.action === 'ENTRY' ? 'rgba(22, 163, 74, 0.1)' : 'rgba(37, 99, 235, 0.1)';
                         }
 
-                        loadLogsForSelectedDate();
-                        loadActiveInsiders();
+                        loadAllLedgerLogs();
                     } else {
                         badge.textContent = data.message;
                         badge.style.borderColor = '#dc2626'; badge.style.color = '#dc2626'; badge.style.backgroundColor = 'rgba(220,38,38,0.1)';
@@ -250,7 +249,7 @@
             }
         });
 
-        function loadLogsForSelectedDate() {
+        function loadAllLedgerLogs() {
             const targetDate = calendarInput.value;
 
             // 1. Fetch data for your main attendance table (Top-Right Panel)
@@ -315,6 +314,8 @@
                         `);
                     });
                 });
+
+            loadActiveInsiders();
         }
 
         function loadActiveInsiders() {
@@ -333,7 +334,7 @@
                             let imgStr = (ins.profile_pic && ins.profile_pic.startsWith("data:image")) ? ins.profile_pic : DEFAULT_SVG;
                             box.insertAdjacentHTML('beforeend', `
                                 <div class="insider-chip" title="Address: ${ins.complete_address}">
-                                    <img src="${imgStr}" class="insider-avatar" onerror="this.src='${DEFAULT_SVG}'">
+                                    <img src="${imgStr}\" class="insider-avatar" onerror="this.src='${DEFAULT_SVG}'">
                                     <div class="insider-info">
                                         <span class="insider-name">${ins.full_name}</span>
                                         <span class="insider-type text-mono" style="font-size:0.65rem; color:#2563eb; font-weight:700;">${ins.resident_id}</span>
@@ -346,8 +347,8 @@
                 });
         }
 
-        calendarInput.addEventListener('change', loadLogsForSelectedDate);
-        window.addEventListener('DOMContentLoaded', () => { loadLogsForSelectedDate(); loadActiveInsiders(); });
+        calendarInput.addEventListener('change', loadAllLedgerLogs);
+        window.addEventListener('DOMContentLoaded', loadAllLedgerLogs);
     </script>
 </body>
 </html>

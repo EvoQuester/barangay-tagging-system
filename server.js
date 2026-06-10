@@ -63,7 +63,7 @@ app.post('/api/attendance/scan', async (req, res) => {
         }
         const resident = residentQuery.rows[0];
 
-        // 🟢 BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM
+        // 🟢 BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM (RESETS AUTOMATICALLY AT MIDNIGHT)
         if (system_mode === 'FOOD') {
             const foodCheck = await pool.query(
                 'SELECT * FROM food_distribution_logs WHERE resident_id = $1 AND distribution_date = CURRENT_DATE',
@@ -160,7 +160,7 @@ app.get('/api/evacuation/insiders', async (req, res) => {
 });
 
 /* ==========================================================================
-   🛡️ LEDGER ROUTE A: FETCH STANDARD ATTENDANCE LOG TIMELINE (RIGHT CARD ONLY)
+   🛡️ LEDGER ROUTE A: FETCH ATTENDANCE LOG TIMELINE FILTERED BY DATE
    ========================================================================== */
 app.get('/api/attendance/logs', async (req, res) => {
     const { date } = req.query;
@@ -181,17 +181,19 @@ app.get('/api/attendance/logs', async (req, res) => {
 });
 
 /* ==========================================================================
-   🥗 LEDGER ROUTE B: FETCH ALL DISPATCHED RATION LOGS (FOR GREEN BOTTOM LEDGER)
+   🥗 LEDGER ROUTE B: FETCH FOOD DISTRIBUTION RATION LOGS FILTERED BY DATE
    ========================================================================== */
 app.get('/api/ration/logs', async (req, res) => {
+    const { date } = req.query;
     try {
         const queryText = `
             SELECT f.claimed_at AS timestamp, r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.profile_pic, 'FOOD_SERVED' AS action
             FROM food_distribution_logs f
             JOIN residents r ON f.resident_id = r.resident_id
+            WHERE DATE(f.claimed_at) = $1
             ORDER BY f.claimed_at DESC`;
 
-        const result = await pool.query(queryText);
+        const result = await pool.query(queryText, [date]);
         res.json({ success: true, logs: result.rows });
     } catch (err) {
         console.error(err);
