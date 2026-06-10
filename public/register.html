@@ -31,59 +31,58 @@
                     <div class="form-row-two-col">
                         <div class="form-group">
                             <label for="reg-age">Resident Age</label>
-                            <input type="number" id="reg-age" required min="0" max="120" placeholder="e.g., 28">
+                            <input type="number" id="reg-age" required min="0" max="150" placeholder="e.g., 28">
                         </div>
 
                         <div class="form-group">
                             <label for="reg-sector">Sector Classification</label>
                             <select id="reg-sector" required>
-                                <option value="" disabled selected>Select sector group...</option>
+                                <option value="" disabled selected>-- Select Resident Category --</option>
                                 <option value="General Resident">General Resident</option>
-                                <option value="PWD">PWD (Persons with Disabilities)</option>
+                                <option value="PWD (Persons with Disabilities)">PWD (Persons with Disabilities)</option>
                                 <option value="Senior Citizen">Senior Citizen</option>
                                 <option value="Solo Parent">Solo Parent</option>
-                                <option value="Youth / SK">Youth / SK (Sangguniang Kabataan)</option>
-                                <option value="Indigent / 4Ps">Indigent / 4Ps Beneficiary</option>
-                                <option value="BHW / Staff">Barangay Health Worker (BHW) / Staff</option>
+                                <option value="Youth / SK (Sangguniang Kabataan)">Youth / SK (Sangguniang Kabataan)</option>
+                                <option value="Barangay Health Worker (BHW) / Staff">Barangay Health Worker (BHW) / Staff</option>
                             </select>
                         </div>
                     </div>
 
-                    <div class="registration-split-panel">
-                        <div>
-                            <img id="reg-avatar-render" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Avatar Preview" class="register-avatar-preview">
-                        </div>
-                        <div class="file-upload-wrapper">
-                            <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Resident Photo Image</label>
-                            <label for="reg-file-chooser" class="file-upload-label-btn">📁 Choose Photo Image from Desktop</label>
-                            <input type="file" id="reg-file-chooser" accept="image/*">
-                            <span id="file-chosen-status" style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">No file selected (using default template profile)</span>
-                        </div>
+                    <div class="form-group">
+                        <label for="reg-address">Complete Address (House No., Street, Purok/Sitio)</label>
+                        <input type="text" id="reg-address" required placeholder="e.g., Block 5 Lot 12, Purok 3, Brgy. San Bartolome">
                     </div>
 
                     <div class="form-group">
-                        <label for="reg-address">Complete Address (Sitio/Purok/Street)</label>
-                        <input type="text" id="reg-address" required placeholder="e.g., Purok 3, Avocado Street">
+                        <label for="reg-emergency">Emergency Contact Information (Name - Relationship - Mobile No.)</label>
+                        <input type="text" id="reg-emergency" required placeholder="e.g., Maria Dela Cruz - Wife - 0917XXXXXXX">
                     </div>
 
-                    <div class="form-group">
-                        <label for="reg-emergency">Emergency Contact (Name & Active Number)</label>
-                        <input type="text" id="reg-emergency" required placeholder="e.g., Maria Dela Cruz - 0917XXXXXXX">
-                    </div>
-
-                    <div class="wristband-assignment-box" id="scanner-zone">
-                        <label>Custom QR Payload Text String</label>
-                        <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">Residents can use any text choice via custom creators. The system auto-assigns sequential serial IDs behind the scenes.</p>
-                        <div class="assignment-controls">
-                            <button type="button" id="activate-scan-btn" class="btn-secondary">Click & Scan Custom QR Code</button>
-                            <span id="scan-status-text" class="status-indicator waiting">No ID Linked Yet</span>
+                    <div class="form-group" style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+                        <label>Profile Picture Enrollment</label>
+                        <div style="display: flex; gap: 1.5rem; align-items: center; margin-top: 0.5rem;">
+                            <div style="text-align: center;">
+                                <img id="avatar-render-preview" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #cbd5e1; background: #f8fafc;" alt="Avatar Template Preview">
+                            </div>
+                            <div style="flex: 1;">
+                                <label for="profile-image-chooser" class="btn-secondary" style="display: inline-block; padding: 0.5rem 1rem; border: 1px solid #94a3b8; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #475569;">📷 Select Profile Photo File</label>
+                                <input type="file" id="profile-image-chooser" accept="image/*" style="display: none;">
+                                <div id="file-chosen-status" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; font-weight: 500;">No file selected (using default template profile)</div>
+                            </div>
                         </div>
-                        
-                        <input type="text" id="reg-wristband-id" autocomplete="off" placeholder="Awaiting hardware pulse...">
-                        <div id="visual-id-display" class="captured-id-display">Awaiting input token text string...</div>
                     </div>
 
-                    <button type="submit" class="btn-primary" id="submit-form-btn" disabled>Save & Register Resident</button>
+                    <div class="form-group hidden-token-card-section" style="border-top: 2px dashed var(--border-color); padding-top: 1.25rem;">
+                        <label>Hardware Assignment Link</label>
+                        <div class="focused-token-detector-bar">
+                            <span class="status-indicator waiting" id="hardware-scan-status-text">No ID Linked Yet</span>
+                            <span class="micro-helper-text" id="hardware-visual-id-display">Awaiting input token text string...</span>
+                        </div>
+                        <input type="text" id="target-wristband-hidden-capture" required style="position: absolute; opacity: 0.001; width: 1px; height: 1px; pointer-events: none;">
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="submit-form-action-btn" disabled style="width: 100%; padding: 0.85rem; font-size: 1rem; letter-spacing: 0.5px;">💾 COMMIT ENROLLMENT RECORD</button>
+
                 </form>
             </section>
         </div>
@@ -91,73 +90,79 @@
 
     <script>
         const form = document.getElementById('registration-form');
-        const activateScanBtn = document.getElementById('activate-scan-btn');
-        const wristbandInput = document.getElementById('reg-wristband-id');
-        const scanStatusText = document.getElementById('scan-status-text');
-        const visualIdDisplay = document.getElementById('visual-id-display');
-        const submitFormBtn = document.getElementById('submit-form-btn');
-        const scannerZone = document.getElementById('scanner-zone');
-        const fileChooser = document.getElementById('reg-file-chooser');
-        const avatarRender = document.getElementById('reg-avatar-render');
+        const wristbandInput = document.getElementById('target-wristband-hidden-capture');
+        const scanStatusText = document.getElementById('hardware-scan-status-text');
+        const visualIdDisplay = document.getElementById('hardware-visual-id-display');
+        const submitFormBtn = document.getElementById('submit-form-action-btn');
+        const fileChooser = document.getElementById('profile-image-chooser');
         const fileChosenStatus = document.getElementById('file-chosen-status');
+        const avatarRender = document.getElementById('avatar-render-preview');
 
         const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
-        let convertedBase64ImageString = ""; 
+        let convertedBase64ImageString = "";
+
+        function reengageFocusState() {
+            if(document.activeElement !== document.getElementById('reg-name') && 
+               document.activeElement !== document.getElementById('reg-age') && 
+               document.activeElement !== document.getElementById('reg-sector') && 
+               document.activeElement !== document.getElementById('reg-address') && 
+               document.activeElement !== document.getElementById('reg-emergency')) {
+                wristbandInput.focus();
+            }
+        }
+        wristbandInput.focus();
+        document.addEventListener('click', () => setTimeout(reengageFocusState, 60));
+
+        wristbandInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const processedToken = this.value.trim();
+                if (!processedToken) return;
+
+                scanStatusText.textContent = "🛡️ TOKEN ASSIGNED LINKED";
+                scanStatusText.className = "status-indicator linked";
+                visualIdDisplay.textContent = `Scanned Key Payload Value: "${processedToken}"`;
+                submitFormBtn.removeAttribute('disabled');
+            }
+        });
 
         fileChooser.addEventListener('change', function() {
             const file = this.files[0];
-            if (!file) return;
-            fileChosenStatus.textContent = `Selected: ${file.name}`;
+            if (!file) {
+                fileChosenStatus.textContent = "No file selected (using default template profile)";
+                avatarRender.src = DEFAULT_SVG;
+                convertedBase64ImageString = "";
+                return;
+            }
+            if (file.size > 15 * 1024 * 1024) {
+                alert("⚠️ FILE TOO LARGE:\nSelected picture exceeds 15MB size limitation framework thresholds.");
+                this.value = "";
+                return;
+            }
+            fileChosenStatus.textContent = `Loaded image asset: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+            
             const reader = new FileReader();
             reader.onload = function(e) {
+                avatarRender.src = e.target.result;
                 convertedBase64ImageString = e.target.result;
-                avatarRender.src = convertedBase64ImageString;
             };
             reader.readAsDataURL(file);
         });
 
-        activateScanBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); 
-            wristbandInput.value = ""; 
-            visualIdDisplay.textContent = "Awaiting input token text string...";
-            wristbandInput.focus();
-            scanStatusText.textContent = "Listening for Scan...";
-            scanStatusText.className = "status-indicator active-listening";
-            scannerZone.classList.add('focused-zone');
-        });
-
-        wristbandInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault(); 
-                const scannedText = this.value.trim();
-                if (scannedText !== "") {
-                    scanStatusText.textContent = "Payload Linked!";
-                    scanStatusText.className = "status-indicator linked";
-                    scannerZone.classList.remove('focused-zone');
-                    visualIdDisplay.textContent = scannedText;
-                    submitFormBtn.removeAttribute('disabled');
-                }
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (scanStatusText.classList.contains('active-listening')) {
-                if (!scannerZone.contains(e.target) && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
-                    wristbandInput.focus();
-                }
-            }
-        });
-
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            
+            if(!wristbandInput.value.trim()){
+                alert("Please scan a tracking card wristband token first to bind the link path.");
+                return;
+            }
+
             const registrationData = {
-                name: document.getElementById('reg-name').value,
+                name: document.getElementById('reg-name').value.trim(),
                 age: document.getElementById('reg-age').value,
                 sector: document.getElementById('reg-sector').value,
-                address: document.getElementById('reg-address').value,
-                emergency_contact: document.getElementById('reg-emergency').value,
-                linked_qr_id: wristbandInput.value,
+                address: document.getElementById('reg-address').value.trim(),
+                emergency_contact: document.getElementById('reg-emergency').value.trim(),
+                linked_qr_id: wristbandInput.value.trim(),
                 profile_pic: convertedBase64ImageString
             };
 
@@ -169,7 +174,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(`✅ REGISTERED SUCCESSFULLY!\nInternal system key assigned: ${data.resident_id}\nCustom QR text string mapping bound: ${wristbandInput.value}`);
+                    alert(`✅ REGISTERED SUCCESSFULLY!\nInternal system key assigned: ${data.resident_id}`);
                     form.reset();
                     convertedBase64ImageString = ""; 
                     avatarRender.src = DEFAULT_SVG;
