@@ -7,15 +7,40 @@
     <link rel="stylesheet" href="style.css">
     <style>
         #scanner-input {
-            position: absolute;
-            opacity: 0.001;
-            top: 0;
-            left: 0;
-            width: 1px;
-            height: 1px;
-            z-index: -999;
-            pointer-events: none;
+            position: absolute; opacity: 0.001; top: 0; left: 0; width: 1px; height: 1px; z-index: -999; pointer-events: none;
         }
+        .kdrp-switch-container {
+            display: flex; align-items: center; background: #e2e8f0; border-radius: 30px; padding: 4px; gap: 4px; border: 1px solid #cbd5e1;
+        }
+        .mode-btn {
+            border: none; padding: 8px 16px; font-weight: 700; font-size: 0.8rem; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; background: transparent; color: #64748b;
+        }
+        .mode-btn.active-attendance {
+            background: #2563eb; color: white; box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+        }
+        .mode-btn.active-food {
+            background: #16a34a; color: white; box-shadow: 0 2px 4px rgba(22,163,74,0.2);
+        }
+        .evac-container {
+            margin-top: 1.5rem; background: white; border-radius: 12px; border: 1px solid var(--border-color); padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .evac-header {
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 1rem;
+        }
+        .evac-counter {
+            background: #2563eb; color: white; font-weight: 800; font-size: 0.9rem; padding: 2px 10px; border-radius: 20px;
+        }
+        .insiders-flex {
+            display: flex; flex-wrap: wrap; gap: 12px; max-height: 250px; overflow-y: auto; padding: 4px;
+        }
+        .insider-chip {
+            display: flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 8px; width: calc(33.33% - 8px); box-sizing: border-box; transition: transform 0.15s ease;
+        }
+        .insider-chip:hover { transform: translateY(-2px); border-color: #cbd5e1; }
+        .insider-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #cbd5e1; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .insider-info { display: flex; flex-direction: column; line-height: 1.2; overflow: hidden; }
+        .insider-name { font-weight: 700; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .insider-sector { font-size: 0.7rem; color: #64748b; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -26,9 +51,13 @@
             <div class="header-split-inline">
                 <div>
                     <h1>BARANGAY ACCESS CONTROL & ATTENDANCE SYSTEM</h1>
-                    <p>Localized Secure Network Monitoring Dashboard</p>
+                    <p style="font-weight: 800; letter-spacing: 0.5px; color:#2563eb;">KING DUAL-ROUTING ROUTING PROTOCOL (KDRP) ACTIVE</p>
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div class="kdrp-switch-container">
+                        <button type="button" class="mode-btn active-attendance" id="btn-mode-attendance" onclick="setSystemMode('ATTENDANCE')">🛡️ Entry/Exit System</button>
+                        <button type="button" class="mode-btn" id="btn-mode-food" onclick="setSystemMode('FOOD')">🥗 Food Distribution</button>
+                    </div>
                     <a href="profile.html" class="btn-secondary nav-action-btn" style="border-color: #64748b; color: #64748b;">👤 Resident Profiles</a>
                     <a href="register.html" class="btn-secondary nav-action-btn" id="nav-register-btn">➕ Register New Resident</a>
                 </div>
@@ -41,44 +70,25 @@
             
             <section class="card scan-result-card" id="scan-card">
                 <h2>Live Scan Status</h2>
-                <div class="status-badge" id="status-badge">READY TO SCAN</div>
+                <div class="status-badge" id="status-badge">READY TO SCAN (ACCESS MODE)</div>
                 
                 <div class="profile-avatar-container">
                     <img id="res-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>" alt="Resident Avatar" class="live-scan-avatar" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2394a3b8\'><path d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z\'/></svg>'">
                 </div>
 
                 <div class="profile-details">
-                    <div class="detail-group">
-                        <label>Barangay Unique ID:</label>
-                        <span id="res-id" class="live-data-badge text-mono">---</span>
-                    </div>
-                    <div class="detail-group">
-                        <label>Resident Name:</label>
-                        <span id="res-name" class="live-data-badge">---</span>
-                    </div>
-                    <div class="detail-group">
-                        <label>Resident Age:</label>
-                        <span id="res-age" class="live-data-badge">---</span>
-                    </div>
-                    <div class="detail-group">
-                        <label>Sector Classification:</label>
-                        <span id="res-sector" class="live-data-badge">---</span>
-                    </div>
-                    <div class="detail-group">
-                        <label>Address:</label>
-                        <span id="res-address" class="live-data-badge">---</span>
-                    </div>
-                    <div class="detail-group">
-                        <label>Emergency Contact:</label>
-                        <span id="res-emergency" class="live-data-badge">---</span>
-                    </div>
+                    <div class="detail-group"><label>Barangay Unique ID:</label><span id="res-id" class="live-data-badge text-mono">---</span></div>
+                    <div class="detail-group"><label>Resident Name:</label><span id="res-name" class="live-data-badge">---</span></div>
+                    <div class="detail-group"><label>Resident Age:</label><span id="res-age" class="live-data-badge">---</span></div>
+                    <div class="detail-group"><label>Sector Classification:</label><span id="res-sector" class="live-data-badge">---</span></div>
+                    <div class="detail-group"><label>Address:</label><span id="res-address" class="live-data-badge">---</span></div>
+                    <div class="detail-group"><label>Emergency Contact:</label><span id="res-emergency" class="live-data-badge">---</span></div>
                 </div>
             </section>
 
             <section class="card logs-card">
                 <div class="logs-header-inline">
                     <h2>Attendance Log Ledger</h2>
-                    
                     <div class="date-selector-group" id="date-controls-container">
                         <select id="quick-date-select">
                             <option value="today" selected>Today</option>
@@ -88,39 +98,79 @@
                         <input type="date" id="calendar-input" class="hidden-date-picker">
                     </div>
                 </div>
-
                 <div class="table-wrapper">
                     <table>
                         <thead>
                             <tr>
-                                <th>Timestamp</th>
-                                <th>Unique ID</th>
-                                <th>Resident Profile Info</th>
-                                <th>Age</th>
-                                <th>Sector</th>
-                                <th>Address</th>
-                                <th>Emergency Contact</th>
-                                <th>Action</th>
+                                <th>Timestamp</th><th>Unique ID</th><th>Resident Profile Info</th><th>Age</th><th>Sector</th><th>Address</th><th>Emergency Contact</th><th>Action</th>
                             </tr>
                         </thead>
-                        <tbody id="logs-table-body">
-                        </tbody>
+                        <tbody id="logs-table-body"></tbody>
                     </table>
                 </div>
             </section>
-
         </div>
+
+        <div class="evac-container">
+            <div class="evac-header">
+                <h2 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">🏠 People Currently Inside Evacuation Center</h2>
+                <span class="evac-counter" id="evac-total-count">0 Persons Inside</span>
+            </div>
+            <div class="insiders-flex" id="evac-insiders-box"></div>
+        </div>
+
+        <div class="evac-container" style="border-top: 5px solid #16a34a; background: white;">
+            <div class="evac-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                <h2 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px; color: #15803d;">🥗 Food Ration Distribution Audit Ledger</h2>
+            </div>
+            <div class="table-wrapper" style="max-height: 350px; overflow-y: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th><th>Unique ID</th><th>Resident Profile Info</th><th>Age</th><th>Sector</th><th>Address</th><th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ration-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 
     <script>
         const scanInput = document.getElementById('scanner-input');
         const quickDateSelect = document.getElementById('quick-date-select');
         const calendarInput = document.getElementById('calendar-input');
-        
         const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
-        const todayStr = new Date().toLocaleDateString('en-CA'); 
+        const todayStr = new Date().toLocaleDateString('en-CA');
         calendarInput.value = todayStr;
-        
+
+        let activeSystemMode = 'ATTENDANCE'; 
+
+        function setSystemMode(mode) {
+            activeSystemMode = mode;
+            const btnAttendance = document.getElementById('btn-mode-attendance');
+            const btnFood = document.getElementById('btn-mode-food');
+            const badge = document.getElementById('status-badge');
+
+            if (mode === 'ATTENDANCE') {
+                btnAttendance.className = "mode-btn active-attendance";
+                btnFood.className = "mode-btn";
+                badge.textContent = "READY TO SCAN (ACCESS MODE)";
+                badge.style.backgroundColor = 'rgba(37,99,235,0.05)';
+                badge.style.borderColor = '#2563eb';
+                badge.style.color = '#2563eb';
+            } else {
+                btnAttendance.className = "mode-btn";
+                btnFood.className = "mode-btn active-food";
+                badge.textContent = "READY TO SCAN (FOOD MODE)";
+                badge.style.backgroundColor = 'rgba(22,163,74,0.05)';
+                badge.style.borderColor = '#16a34a';
+                badge.style.color = '#16a34a';
+            }
+            scanInput.focus();
+        }
+
         function keepScannerFocused() {
             if (document.activeElement !== calendarInput && document.activeElement !== quickDateSelect) {
                 scanInput.focus();
@@ -130,137 +180,174 @@
         document.addEventListener('click', () => setTimeout(keepScannerFocused, 50));
 
         quickDateSelect.addEventListener('change', function() {
-            if (this.value === 'custom') {
-                calendarInput.classList.add('visible');
-                calendarInput.focus(); 
-            } else {
+            if (this.value === 'custom') { calendarInput.classList.add('visible'); calendarInput.focus(); }
+            else {
                 calendarInput.classList.remove('visible');
                 if (this.value === 'today') calendarInput.value = todayStr;
                 else if (this.value === 'yesterday') {
-                    const yesterday = new Date();
-                    yesterday.setDate(yesterday.getDate() - 1);
-                    calendarInput.value = yesterday.toLocaleDateString('en-CA');
+                    const yest = new Date(); yest.setDate(yest.getDate() - 1);
+                    calendarInput.value = yest.toLocaleDateString('en-CA');
                 }
                 loadLogsForSelectedDate();
                 setTimeout(keepScannerFocused, 50);
             }
         });
 
-        calendarInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                loadLogsForSelectedDate();
-                setTimeout(keepScannerFocused, 50);
-            }
-        });
+        calendarInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') { loadLogsForSelectedDate(); setTimeout(keepScannerFocused, 50); } });
 
         scanInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 const scannedId = this.value.trim();
-                this.value = ''; 
+                this.value = '';
                 if (!scannedId) return;
 
                 fetch('/api/attendance/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ scanned_id: scannedId })
+                    body: JSON.stringify({ scanned_id: scannedId, system_mode: activeSystemMode })
                 })
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
                     const badge = document.getElementById('status-badge');
+                    
+                    if (data.is_food_denied) {
+                        badge.textContent = `❌ DENIED: ${data.message}`;
+                        badge.style.borderColor = '#dc2626'; badge.style.color = '#dc2626'; badge.style.backgroundColor = 'rgba(220,38,38,0.1)';
+                        alert(`🛑 Duplicate detected for ${data.resident.name} (${data.resident.id})! Food has already been served to this individual today.`);
+                        return;
+                    }
+
                     if (data.success) {
                         let cleanPic = DEFAULT_SVG;
                         if (data.resident.picture && data.resident.picture.trim().startsWith("data:image")) {
                             cleanPic = data.resident.picture.trim();
                         }
                         document.getElementById('res-pic').src = cleanPic;
-                        document.getElementById('res-id').textContent = data.resident.id; 
+                        document.getElementById('res-id').textContent = data.resident.id;
                         document.getElementById('res-name').textContent = data.resident.name;
                         document.getElementById('res-age').textContent = data.resident.age;
                         document.getElementById('res-sector').textContent = data.resident.sector;
                         document.getElementById('res-address').textContent = data.resident.address;
-                        document.getElementById('res-emergency').textContent = data.resident.emergency;
+                        document.getElementById('res-emergency').textContent = data.resident.emergency || 'N/A';
 
-                        badge.textContent = `ACCESS GRANTED: ${data.action}`;
-                        badge.style.borderColor = data.action === 'ENTRY' ? 'var(--status-entry)' : 'var(--status-exit)';
-                        badge.style.color = data.action === 'ENTRY' ? 'var(--status-entry)' : 'var(--status-exit)';
-                        badge.style.backgroundColor = data.action === 'ENTRY' ? 'rgba(22, 163, 74, 0.1)' : 'rgba(37, 99, 235, 0.1)';
+                        if (data.action === 'FOOD_SERVED') {
+                            badge.textContent = `✅ RATION ISSUED SUCCESSFULLY!`;
+                            badge.style.borderColor = '#16a34a'; badge.style.color = '#16a34a'; badge.style.backgroundColor = 'rgba(22,163,74,0.1)';
+                        } else {
+                            badge.textContent = `ACCESS GRANTED: ${data.action}`;
+                            badge.style.borderColor = data.action === 'ENTRY' ? '#16a34a' : '#2563eb';
+                            badge.style.color = data.action === 'ENTRY' ? '#16a34a' : '#2563eb';
+                            badge.style.backgroundColor = data.action === 'ENTRY' ? 'rgba(22,163,74,0.1)' : 'rgba(37,99,235,0.1)';
+                        }
+
                         loadLogsForSelectedDate();
+                        loadActiveInsiders();
                     } else {
                         badge.textContent = data.message;
-                        badge.style.borderColor = '#dc2626';
-                        badge.style.color = '#dc2626';
-                        badge.style.backgroundColor = 'rgba(220, 38, 38, 0.1)';
-                        
-                        document.getElementById('res-pic').src = DEFAULT_SVG;
-                        document.getElementById('res-id').textContent = '---';
-                        document.getElementById('res-name').textContent = '---';
-                        document.getElementById('res-age').textContent = '---';
-                        document.getElementById('res-sector').textContent = '---';
-                        document.getElementById('res-address').textContent = '---';
-                        document.getElementById('res-emergency').textContent = '---';
+                        badge.style.borderColor = '#dc2626'; badge.style.color = '#dc2626'; badge.style.backgroundColor = 'rgba(220,38,38,0.1)';
                     }
-                })
-                .catch(err => console.error('Scanning engine link breakdown:', err));
+                });
             }
         });
 
         function loadLogsForSelectedDate() {
             const targetDate = calendarInput.value;
+
+            // 1. Fetch data for your main attendance table (Top-Right Panel)
             fetch(`/api/attendance/logs?date=${targetDate}`)
-                .then(response => response.json())
+                .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         const tbody = document.getElementById('logs-table-body');
-                        tbody.innerHTML = ''; 
-
+                        tbody.innerHTML = '';
                         if (data.logs.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding: 2rem;">No logs registered for this calendar date.</td></tr>';
+                            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:2rem;">No entries registered for this date.</td></tr>';
                             return;
                         }
-
                         data.logs.forEach(log => {
                             const formattedTime = new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                             let sectorClass = log.sector.toLowerCase().includes('senior') ? 'senior' : (log.sector.toLowerCase().includes('youth') ? 'youth' : '');
                             const actionBadge = log.action === 'ENTRY' ? '<span class="badge entry">ENTRY</span>' : '<span class="badge exit">EXIT</span>';
+                            let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic : DEFAULT_SVG;
 
-                            // 🛡️ SANITIZATION SYSTEM GATE CHECK
-                            let cleanImageSrc = DEFAULT_SVG;
-                            if (
-                                log.profile_pic && 
-                                log.profile_pic.trim() !== "" && 
-                                log.profile_pic.startsWith("data:image") && 
-                                !log.profile_pic.includes('"') && 
-                                !log.profile_pic.includes("'")
-                            ) {
-                                cleanImageSrc = log.profile_pic.trim();
-                            }
-
-                            const rowHTML = `
+                            tbody.insertAdjacentHTML('beforeend', `
                                 <tr>
                                     <td>${formattedTime}</td>
                                     <td><code class="table-id">${log.resident_id}</code></td>
-                                    <td>
-                                        <div class="table-inline-profile-cell">
-                                            <img src="${cleanImageSrc}" alt="Avatar" class="table-row-avatar" onerror="this.src='${DEFAULT_SVG}'">
-                                            <span class="strong-text">${log.full_name}</span>
-                                        </div>
-                                    </td>
+                                    <td><div class="table-inline-profile-cell"><img src="${imgStr}" class="table-row-avatar" onerror="this.src='${DEFAULT_SVG}'"><span class="strong-text">${log.full_name}</span></div></td>
                                     <td>${log.age}</td>
                                     <td><span class="sector-tag ${sectorClass}">${log.sector}</span></td>
                                     <td>${log.complete_address}</td>
                                     <td>${log.emergency_contact}</td>
                                     <td>${actionBadge}</td>
                                 </tr>
-                            `;
-                            tbody.insertAdjacentHTML('beforeend', rowHTML);
+                            `);
                         });
                     }
-                })
-                .catch(err => console.error('Failed to retrieve logs:', err));
+                });
+
+            // 2. Fetch data for your food distribution table (Green Bottom Card)
+            fetch(`/api/ration/logs?date=${targetDate}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('ration-table-body');
+                    tbody.innerHTML = '';
+                    if (!data.success || !data.logs || data.logs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem;">No ration claims registered for this date.</td></tr>';
+                        return;
+                    }
+                    data.logs.forEach(log => {
+                        const formattedTime = new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        let sectorClass = log.sector.toLowerCase().includes('senior') ? 'senior' : (log.sector.toLowerCase().includes('youth') ? 'youth' : '');
+                        const rationBadge = '<span class="badge entry" style="background-color: rgba(22, 163, 74, 0.15); color: #16a34a; border: 1px solid #16a34a;">🥗 RATION SERVED</span>';
+                        let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic : DEFAULT_SVG;
+
+                        tbody.insertAdjacentHTML('beforeend', `
+                            <tr>
+                                <td>${formattedTime}</td>
+                                <td><code class="table-id">${log.resident_id}</code></td>
+                                <td><div class="table-inline-profile-cell"><img src="${imgStr}" class="table-row-avatar" onerror="this.src='${DEFAULT_SVG}'"><span class="strong-text">${log.full_name}</span></div></td>
+                                <td>${log.age}</td>
+                                <td><span class="sector-tag ${sectorClass}">${log.sector}</span></td>
+                                <td>${log.complete_address}</td>
+                                <td>${rationBadge}</td>
+                            </tr>
+                        `);
+                    });
+                });
+        }
+
+        function loadActiveInsiders() {
+            fetch('/api/evacuation/insiders')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const box = document.getElementById('evac-insiders-box');
+                        document.getElementById('evac-total-count').textContent = `${data.insiders.length} Persons Inside`;
+                        box.innerHTML = '';
+                        if (data.insiders.length === 0) {
+                            box.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; font-style:italic; padding:1rem; width:100%; text-align:center;">No residents are currently registered inside the evacuation center.</div>';
+                            return;
+                        }
+                        data.insiders.forEach(ins => {
+                            let imgStr = (ins.profile_pic && ins.profile_pic.startsWith("data:image")) ? ins.profile_pic : DEFAULT_SVG;
+                            box.insertAdjacentHTML('beforeend', `
+                                <div class="insider-chip" title="Address: ${ins.complete_address}">
+                                    <img src="${imgStr}" class="insider-avatar" onerror="this.src='${DEFAULT_SVG}'">
+                                    <div class="insider-info">
+                                        <span class="insider-name">${ins.full_name}</span>
+                                        <span class="insider-type text-mono" style="font-size:0.65rem; color:#2563eb; font-weight:700;">${ins.resident_id}</span>
+                                        <span class="insider-sector">${ins.sector}</span>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                });
         }
 
         calendarInput.addEventListener('change', loadLogsForSelectedDate);
-        window.addEventListener('DOMContentLoaded', loadLogsForSelectedDate);
+        window.addEventListener('DOMContentLoaded', () => { loadLogsForSelectedDate(); loadActiveInsiders(); });
     </script>
 </body>
 </html>
