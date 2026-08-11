@@ -12,12 +12,10 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Pool connection for Supabase
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
 });
 
 const OFFLINE_DEFAULT_PIC = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2394a3b8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z"/></svg>';
@@ -51,7 +49,7 @@ app.post('/api/residents/register', async (req, res) => {
 });
 
 /* ==========================================================================
-   🧠 THE JESSE HIAN CHAY KING DUAL-ROUTING PROTOCOL (KDRP) CORE SCAN PIPELINE
+   🧠 KING DUAL-ROUTING PROTOCOL (KDRP) CORE SCAN PIPELINE
    ========================================================================== */
 app.post('/api/attendance/scan', async (req, res) => {
     const { scanned_id, system_mode } = req.body; 
@@ -63,11 +61,10 @@ app.post('/api/attendance/scan', async (req, res) => {
         }
         const resident = residentQuery.rows[0];
 
-        // 🟢 BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM
+        // BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM
         if (system_mode === 'FOOD') {
-            // Checks for claims on the database's current server date
             const foodCheck = await pool.query(
-                'SELECT * FROM food_distribution_logs WHERE resident_id = $1 AND DATE(claimed_at) = CURRENT_DATE',
+                "SELECT * FROM food_distribution_logs WHERE resident_id = $1 AND DATE(claimed_at) = CURRENT_DATE",
                 [resident.resident_id]
             );
 
@@ -80,9 +77,9 @@ app.post('/api/attendance/scan', async (req, res) => {
                 });
             }
 
-            // Database generates the exact timestamp natively upon insert
+            // 🇵🇭 Store explicitly in Philippine Standard Time
             await pool.query(
-                'INSERT INTO food_distribution_logs (resident_id, wristband_id, claimed_at) VALUES ($1, $2, NOW())',
+                "INSERT INTO food_distribution_logs (resident_id, wristband_id, claimed_at) VALUES ($1, $2, NOW() AT TIME ZONE 'Asia/Manila')",
                 [resident.resident_id, resident.wristband_id]
             );
 
@@ -100,7 +97,7 @@ app.post('/api/attendance/scan', async (req, res) => {
             });
         }
 
-        // 🔵 BRANCH A: REGULAR ATTENDANCE ACCESS ROUTINE (STRICT TOGGLE SEQUENCER)
+        // 🔵 BRANCH A: REGULAR ATTENDANCE ACCESS ROUTINE
         const logQuery = await pool.query(
             `SELECT action FROM attendance_logs 
              WHERE resident_id = $1 
@@ -113,9 +110,9 @@ app.post('/api/attendance/scan', async (req, res) => {
             currentAction = 'EXIT';
         }
 
-        // Database generates the exact timestamp natively upon insert
+        // 🇵🇭 Store explicitly in Philippine Standard Time
         await pool.query(
-            'INSERT INTO attendance_logs (resident_id, wristband_id, action, timestamp) VALUES ($1, $2, $3, NOW())',
+            "INSERT INTO attendance_logs (resident_id, wristband_id, action, timestamp) VALUES ($1, $2, $3, NOW() AT TIME ZONE 'Asia/Manila')",
             [resident.resident_id, resident.wristband_id, currentAction]
         );
 
@@ -140,7 +137,7 @@ app.post('/api/attendance/scan', async (req, res) => {
 });
 
 /* ==========================================================================
-   🏠 ROUTE: FETCH CURRENT ACTIVE INSIDERS (ENTRY WITHOUT EXIT)
+   ROUTE: FETCH CURRENT ACTIVE INSIDERS
    ========================================================================== */
 app.get('/api/evacuation/insiders', async (req, res) => {
     try {
@@ -165,13 +162,14 @@ app.get('/api/evacuation/insiders', async (req, res) => {
 });
 
 /* ==========================================================================
-   🛡️ LEDGER ROUTE A: FETCH ATTENDANCE LOG TIMELINE FILTERED BY DATE
+   LEDGER ROUTE A: FETCH ATTENDANCE LOG TIMELINE
    ========================================================================== */
 app.get('/api/attendance/logs', async (req, res) => {
     const { date } = req.query;
     try {
         const queryText = `
-            SELECT l.timestamp, r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.emergency_contact, r.profile_pic, l.action
+            SELECT TO_CHAR(l.timestamp, 'HH12:MI:SS AM') AS timestamp, 
+                   r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.emergency_contact, r.profile_pic, l.action
             FROM attendance_logs l
             JOIN residents r ON l.resident_id = r.resident_id
             WHERE DATE(l.timestamp) = $1
@@ -186,13 +184,14 @@ app.get('/api/attendance/logs', async (req, res) => {
 });
 
 /* ==========================================================================
-   🥗 LEDGER ROUTE B: FETCH FOOD DISTRIBUTION RATION LOGS FILTERED BY DATE
+   LEDGER ROUTE B: FETCH FOOD RATION LOGS
    ========================================================================== */
 app.get('/api/ration/logs', async (req, res) => {
     const { date } = req.query;
     try {
         const queryText = `
-            SELECT f.claimed_at AS timestamp, r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.profile_pic, 'FOOD_SERVED' AS action
+            SELECT TO_CHAR(f.claimed_at, 'HH12:MI:SS AM') AS timestamp, 
+                   r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.profile_pic, 'FOOD_SERVED' AS action
             FROM food_distribution_logs f
             JOIN residents r ON f.resident_id = r.resident_id
             WHERE DATE(f.claimed_at) = $1

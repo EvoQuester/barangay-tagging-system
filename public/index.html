@@ -147,6 +147,15 @@
 
         let activeSystemMode = 'ATTENDANCE'; 
 
+        // 🛡️ Fail-safe time parser: converts raw ISO string or formatted string into 12-hour local time
+        function parseToLocalTimeString(rawTs) {
+            if (!rawTs) return '---';
+            if (/^\d{2}:\d{2}:\d{2} (AM|PM)$/i.test(rawTs)) return rawTs;
+            const d = new Date(rawTs);
+            if (isNaN(d.getTime())) return rawTs;
+            return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }
+
         function setSystemMode(mode) {
             activeSystemMode = mode;
             const btnAttendance = document.getElementById('btn-mode-attendance');
@@ -197,9 +206,11 @@
 
         scanInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                const scannedId = this.value.trim();
+                let scannedId = this.value.trim();
                 this.value = '';
                 if (!scannedId) return;
+
+                scannedId = scannedId.replace(/^SMSTO:/i, '').replace(/:$/, '').trim();
 
                 fetch('/api/attendance/scan', {
                     method: 'POST',
@@ -252,7 +263,6 @@
         function loadAllLedgerLogs() {
             const targetDate = calendarInput.value;
 
-            // 1. Fetch data for your main attendance table (Top-Right Panel)
             fetch(`/api/attendance/logs?date=${targetDate}`)
                 .then(res => res.json())
                 .then(data => {
@@ -264,7 +274,7 @@
                             return;
                         }
                         data.logs.forEach(log => {
-                            const formattedTime = new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                            const formattedTime = parseToLocalTimeString(log.timestamp);
                             let sectorClass = log.sector.toLowerCase().includes('senior') ? 'senior' : (log.sector.toLowerCase().includes('youth') ? 'youth' : '');
                             const actionBadge = log.action === 'ENTRY' ? '<span class="badge entry">ENTRY</span>' : '<span class="badge exit">EXIT</span>';
                             let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic : DEFAULT_SVG;
@@ -285,7 +295,6 @@
                     }
                 });
 
-            // 2. Fetch data for your food distribution table (Green Bottom Card)
             fetch(`/api/ration/logs?date=${targetDate}`)
                 .then(res => res.json())
                 .then(data => {
@@ -296,7 +305,7 @@
                         return;
                     }
                     data.logs.forEach(log => {
-                        const formattedTime = new Date(log.timestamp).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        const formattedTime = parseToLocalTimeString(log.timestamp);
                         let sectorClass = log.sector.toLowerCase().includes('senior') ? 'senior' : (log.sector.toLowerCase().includes('youth') ? 'youth' : '');
                         const rationBadge = '<span class="badge entry" style="background-color: rgba(22, 163, 74, 0.15); color: #16a34a; border: 1px solid #16a34a;">🥗 RATION SERVED</span>';
                         let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic : DEFAULT_SVG;

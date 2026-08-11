@@ -78,7 +78,8 @@
                             <span class="status-indicator waiting" id="hardware-scan-status-text">No ID Linked Yet</span>
                             <span class="micro-helper-text" id="hardware-visual-id-display">Awaiting input token text string...</span>
                         </div>
-                        <input type="text" id="target-wristband-hidden-capture" required style="position: absolute; opacity: 0.001; width: 1px; height: 1px; pointer-events: none;">
+                        <!-- 🔑 REMOVED 'required' FROM THIS HIDDEN INPUT FIELD BELOW -->
+                        <input type="text" id="target-wristband-hidden-capture" style="position: absolute; opacity: 0.001; width: 1px; height: 1px; pointer-events: none;">
                     </div>
 
                     <button type="submit" class="btn-primary" id="submit-form-action-btn" disabled style="width: 100%; padding: 0.85rem; font-size: 1rem; letter-spacing: 0.5px;">💾 COMMIT ENROLLMENT RECORD</button>
@@ -99,7 +100,9 @@
         const avatarRender = document.getElementById('avatar-render-preview');
 
         const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
+        
         let convertedBase64ImageString = "";
+        let lockedQrToken = "";
 
         function reengageFocusState() {
             if(document.activeElement !== document.getElementById('reg-name') && 
@@ -113,15 +116,25 @@
         wristbandInput.focus();
         document.addEventListener('click', () => setTimeout(reengageFocusState, 60));
 
+        // 🎯 HARDWARE SCANNER LISTENER (WITH BUFFER RESET & AUTO-SANITIZER)
         wristbandInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const processedToken = this.value.trim();
-                if (!processedToken) return;
+                
+                let rawToken = this.value.trim();
+                this.value = ''; // 🔑 Clear input buffer immediately
+
+                if (!rawToken) return;
+
+                // 🧹 Strip out "SMSTO:" prefixes and trailing colons if present
+                rawToken = rawToken.replace(/^SMSTO:/i, '').replace(/:$/, '').trim();
+
+                // Lock on clean single token
+                lockedQrToken = rawToken;
 
                 scanStatusText.textContent = "🛡️ TOKEN ASSIGNED LINKED";
                 scanStatusText.className = "status-indicator linked";
-                visualIdDisplay.textContent = `Scanned Key Payload Value: "${processedToken}"`;
+                visualIdDisplay.textContent = `Scanned Key Payload Value: "${lockedQrToken}"`;
                 submitFormBtn.removeAttribute('disabled');
             }
         });
@@ -151,7 +164,7 @@
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            if(!wristbandInput.value.trim()){
+            if(!lockedQrToken){
                 alert("Please scan a tracking card wristband token first to bind the link path.");
                 return;
             }
@@ -162,7 +175,7 @@
                 sector: document.getElementById('reg-sector').value,
                 address: document.getElementById('reg-address').value.trim(),
                 emergency_contact: document.getElementById('reg-emergency').value.trim(),
-                linked_qr_id: wristbandInput.value.trim(),
+                linked_qr_id: lockedQrToken,
                 profile_pic: convertedBase64ImageString
             };
 
@@ -177,6 +190,7 @@
                     alert(`✅ REGISTERED SUCCESSFULLY!\nInternal system key assigned: ${data.resident_id}`);
                     form.reset();
                     convertedBase64ImageString = ""; 
+                    lockedQrToken = "";
                     avatarRender.src = DEFAULT_SVG;
                     fileChosenStatus.textContent = "No file selected (using default template profile)";
                     visualIdDisplay.textContent = "Awaiting input token text string...";
