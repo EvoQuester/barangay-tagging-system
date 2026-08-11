@@ -18,7 +18,31 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-const OFFLINE_DEFAULT_PIC = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%2394a3b8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z"/></svg>';
+// Single-quoted default SVG payload to prevent HTML attribute escaping issues
+const OFFLINE_DEFAULT_PIC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
+
+// 🇵🇭 Guaranteed Philippine Standard Time (PHT) Formatter
+function formatPHT(rawTs) {
+    if (!rawTs) return '---';
+    
+    let isoStr = typeof rawTs === 'string' ? rawTs.trim() : rawTs.toISOString();
+    
+    // Force UTC treatment if missing timezone offset
+    if (!isoStr.endsWith('Z') && !isoStr.includes('+')) {
+        isoStr = isoStr.replace(' ', 'T') + 'Z';
+    }
+
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return String(rawTs);
+
+    return d.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Manila',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+}
 
 /* ==========================================================================
    ROUTE: REGISTER RESIDENT
@@ -30,7 +54,7 @@ app.post('/api/residents/register', async (req, res) => {
         if (existingId.rows.length > 0) {
             return res.status(400).json({ success: false, message: 'This QR code is already bound to another resident!' });
         }
-        const fallbackPic = (profile_pic && profile_pic.trim() !== "undefined") ? profile_pic.trim() : OFFLINE_DEFAULT_PIC;
+        const fallbackPic = (profile_pic && profile_pic.trim() !== "undefined") ? profile_pic.trim().replace(/"/g, "'") : OFFLINE_DEFAULT_PIC;
         
         const seqResult = await pool.query("SELECT nextval('resident_id_seq')");
         const nextSeqNum = String(seqResult.rows[0].nextval).padStart(4, '0');
@@ -61,7 +85,7 @@ app.post('/api/attendance/scan', async (req, res) => {
         }
         const resident = residentQuery.rows[0];
 
-        // BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM
+        // 🟢 BRANCH B: FOOD DISTRIBUTION CONTROL ALGORITHM
         if (system_mode === 'FOOD') {
             const foodCheck = await pool.query(
                 "SELECT * FROM food_distribution_logs WHERE resident_id = $1 AND DATE(claimed_at) = CURRENT_DATE",
@@ -77,7 +101,6 @@ app.post('/api/attendance/scan', async (req, res) => {
                 });
             }
 
-            // 🇵🇭 Store explicitly in Philippine Standard Time
             await pool.query(
                 "INSERT INTO food_distribution_logs (resident_id, wristband_id, claimed_at) VALUES ($1, $2, NOW() AT TIME ZONE 'Asia/Manila')",
                 [resident.resident_id, resident.wristband_id]
@@ -110,7 +133,6 @@ app.post('/api/attendance/scan', async (req, res) => {
             currentAction = 'EXIT';
         }
 
-        // 🇵🇭 Store explicitly in Philippine Standard Time
         await pool.query(
             "INSERT INTO attendance_logs (resident_id, wristband_id, action, timestamp) VALUES ($1, $2, $3, NOW() AT TIME ZONE 'Asia/Manila')",
             [resident.resident_id, resident.wristband_id, currentAction]
@@ -137,7 +159,7 @@ app.post('/api/attendance/scan', async (req, res) => {
 });
 
 /* ==========================================================================
-   ROUTE: FETCH CURRENT ACTIVE INSIDERS
+   🏠 ROUTE: FETCH CURRENT ACTIVE INSIDERS
    ========================================================================== */
 app.get('/api/evacuation/insiders', async (req, res) => {
     try {
@@ -162,21 +184,26 @@ app.get('/api/evacuation/insiders', async (req, res) => {
 });
 
 /* ==========================================================================
-   LEDGER ROUTE A: FETCH ATTENDANCE LOG TIMELINE
+   🛡️ LEDGER ROUTE A: FETCH ATTENDANCE LOG TIMELINE
    ========================================================================== */
 app.get('/api/attendance/logs', async (req, res) => {
     const { date } = req.query;
     try {
         const queryText = `
-            SELECT TO_CHAR(l.timestamp, 'HH12:MI:SS AM') AS timestamp, 
-                   r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.emergency_contact, r.profile_pic, l.action
+            SELECT l.timestamp, r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.emergency_contact, r.profile_pic, l.action
             FROM attendance_logs l
             JOIN residents r ON l.resident_id = r.resident_id
             WHERE DATE(l.timestamp) = $1
             ORDER BY l.timestamp DESC`;
 
-        const logs = await pool.query(queryText, [date]);
-        res.json({ success: true, logs: logs.rows });
+        const result = await pool.query(queryText, [date]);
+        
+        const cleanLogs = result.rows.map(row => ({
+            ...row,
+            timestamp: formatPHT(row.timestamp)
+        }));
+
+        res.json({ success: true, logs: cleanLogs });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false });
@@ -184,21 +211,26 @@ app.get('/api/attendance/logs', async (req, res) => {
 });
 
 /* ==========================================================================
-   LEDGER ROUTE B: FETCH FOOD RATION LOGS
+   🥗 LEDGER ROUTE B: FETCH FOOD RATION LOGS
    ========================================================================== */
 app.get('/api/ration/logs', async (req, res) => {
     const { date } = req.query;
     try {
         const queryText = `
-            SELECT TO_CHAR(f.claimed_at, 'HH12:MI:SS AM') AS timestamp, 
-                   r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.profile_pic, 'FOOD_SERVED' AS action
+            SELECT f.claimed_at AS timestamp, r.resident_id, r.full_name, r.age, r.sector, r.complete_address, r.profile_pic, 'FOOD_SERVED' AS action
             FROM food_distribution_logs f
             JOIN residents r ON f.resident_id = r.resident_id
             WHERE DATE(f.claimed_at) = $1
             ORDER BY f.claimed_at DESC`;
 
         const result = await pool.query(queryText, [date]);
-        res.json({ success: true, logs: result.rows });
+
+        const cleanLogs = result.rows.map(row => ({
+            ...row,
+            timestamp: formatPHT(row.timestamp)
+        }));
+
+        res.json({ success: true, logs: cleanLogs });
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false });
@@ -218,7 +250,7 @@ app.get('/api/residents/:id', async (req, res) => {
 app.put('/api/residents/update', async (req, res) => {
     const { resident_id, name, age, sector, address, emergency_contact, profile_pic } = req.body;
     try {
-        const fallbackPic = (profile_pic && profile_pic.trim() !== "undefined") ? profile_pic.trim() : OFFLINE_DEFAULT_PIC;
+        const fallbackPic = (profile_pic && profile_pic.trim() !== "undefined") ? profile_pic.trim().replace(/"/g, "'") : OFFLINE_DEFAULT_PIC;
         await pool.query(
             'UPDATE residents SET full_name = $1, age = $2, sector = $3, complete_address = $4, emergency_contact = $5, profile_pic = $6 WHERE resident_id = $7',
             [name, parseInt(age), sector, address, emergency_contact, fallbackPic, resident_id]

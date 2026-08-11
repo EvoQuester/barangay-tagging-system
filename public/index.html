@@ -231,7 +231,7 @@
                     if (data.success) {
                         let cleanPic = DEFAULT_SVG;
                         if (data.resident.picture && data.resident.picture.trim().startsWith("data:image")) {
-                            cleanPic = data.resident.picture.trim();
+                            cleanPic = data.resident.picture.trim().replace(/"/g, "'");
                         }
                         document.getElementById('res-pic').src = cleanPic;
                         document.getElementById('res-id').textContent = data.resident.id;
@@ -277,7 +277,8 @@
                             const formattedTime = parseToLocalTimeString(log.timestamp);
                             let sectorClass = log.sector.toLowerCase().includes('senior') ? 'senior' : (log.sector.toLowerCase().includes('youth') ? 'youth' : '');
                             const actionBadge = log.action === 'ENTRY' ? '<span class="badge entry">ENTRY</span>' : '<span class="badge exit">EXIT</span>';
-                            let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic : DEFAULT_SVG;
+                            // 🔑 Sanitizes double quotes in SVG data string to prevent breaking table layout
+                            let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic.replace(/"/g, "'") : DEFAULT_SVG;
 
                             tbody.insertAdjacentHTML('beforeend', `
                                 <tr>
@@ -308,7 +309,7 @@
                         const formattedTime = parseToLocalTimeString(log.timestamp);
                         let sectorClass = log.sector.toLowerCase().includes('senior') ? 'senior' : (log.sector.toLowerCase().includes('youth') ? 'youth' : '');
                         const rationBadge = '<span class="badge entry" style="background-color: rgba(22, 163, 74, 0.15); color: #16a34a; border: 1px solid #16a34a;">🥗 RATION SERVED</span>';
-                        let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic : DEFAULT_SVG;
+                        let imgStr = (log.profile_pic && log.profile_pic.startsWith("data:image")) ? log.profile_pic.replace(/"/g, "'") : DEFAULT_SVG;
 
                         tbody.insertAdjacentHTML('beforeend', `
                             <tr>
@@ -340,10 +341,10 @@
                             return;
                         }
                         data.insiders.forEach(ins => {
-                            let imgStr = (ins.profile_pic && ins.profile_pic.startsWith("data:image")) ? ins.profile_pic : DEFAULT_SVG;
+                            let imgStr = (ins.profile_pic && ins.profile_pic.startsWith("data:image")) ? ins.profile_pic.replace(/"/g, "'") : DEFAULT_SVG;
                             box.insertAdjacentHTML('beforeend', `
                                 <div class="insider-chip" title="Address: ${ins.complete_address}">
-                                    <img src="${imgStr}\" class="insider-avatar" onerror="this.src='${DEFAULT_SVG}'">
+                                    <img src="${imgStr}" class="insider-avatar" onerror="this.src='${DEFAULT_SVG}'">
                                     <div class="insider-info">
                                         <span class="insider-name">${ins.full_name}</span>
                                         <span class="insider-type text-mono" style="font-size:0.65rem; color:#2563eb; font-weight:700;">${ins.resident_id}</span>
