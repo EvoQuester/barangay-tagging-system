@@ -237,16 +237,38 @@ app.get('/api/ration/logs', async (req, res) => {
     }
 });
 
+/* ==========================================================================
+   📋 ROUTE: FETCH ALL RESIDENTS (FOR QR GENERATOR DIRECTORY)
+   ========================================================================== */
+app.get('/api/residents', async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT resident_id, wristband_id, full_name, age, sector, complete_address, profile_pic FROM residents ORDER BY resident_id ASC'
+        );
+        res.json({ success: true, residents: result.rows });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Failed to fetch residents.' });
+    }
+});
+
+/* ==========================================================================
+   🔍 ROUTE: FETCH INDIVIDUAL RESIDENT PROFILE
+   ========================================================================== */
 app.get('/api/residents/:id', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM residents WHERE wristband_id = $1 OR resident_id = $2', [req.params.id, req.params.id]);
         if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Not found.' });
         res.json({ success: true, resident: result.rows[0] });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ success: false });
     }
 });
 
+/* ==========================================================================
+   ✏️ ROUTE: UPDATE RESIDENT PROFILE
+   ========================================================================== */
 app.put('/api/residents/update', async (req, res) => {
     const { resident_id, name, age, sector, address, emergency_contact, profile_pic } = req.body;
     try {
@@ -257,6 +279,7 @@ app.put('/api/residents/update', async (req, res) => {
         );
         res.json({ success: true });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ success: false });
     }
 });

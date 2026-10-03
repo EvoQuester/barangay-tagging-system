@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barangay PVC Pass & QR Code Generator</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+  <style>
+    .qr-layout-grid {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .pvc-preview-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: sticky;
+      top: 2rem;
+    }
+
+    .active-resident-tag {
+      width: 100%;
+      text-align: center;
+      margin-bottom: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ==========================================================================
+       STANDARD CR80 PVC CARD (85.60mm x 54.00mm)
+       ========================================================================== */
+    .pvc-card-container {
+      width: 400px;
+      height: 252px;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-sizing: border-box;
+      position: relative;
+      margin: 0.5rem 0 1.25rem 0;
+      background-color: #ffffff;
+    }
+
+    /* CUT-GUIDE NAME LABEL ON TOP OF QR CODE */
+    .pvc-cut-name {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #0f172a;
+      text-align: center;
+      text-transform: uppercase;
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    /* CIRCLE BADGE FRAME (Exact Dimensions Preserved) */
+    .pvc-qr-circle-wrapper {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border: 3px solid #000000;
+      box-sizing: border-box;
+      padding: 0;
+    }
+
+    #canvas {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 86px;
+      height: 86px;
+    }
+
+    /* SECTOR LABEL BELOW QR CODE */
+    .pvc-cut-sector {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #334155;
+      text-align: center;
+      text-transform: uppercase;
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    .search-input-field {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: #f8fafc;
+      outline: none;
+      margin-bottom: 1rem;
+    }
+
+    .search-input-field:focus {
+      border-color: var(--accent-green);
+      background: #ffffff;
+    }
+
+    .table-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent-green);
+    }
+
+    tr.selected-row {
+      background-color: rgba(21, 128, 61, 0.08) !important;
+    }
+
+    .btn-download {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: var(--accent-green);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-download:hover {
+      background-color: #166534;
+    }
+
+    .btn-download:disabled {
+      background-color: #cbd5e1;
+      cursor: not-allowed;
+    }
+
+    /* ==========================================================================
+       STRICT 1-PAGE ONLY FULL-BLEED PRINT RULES (EXACT 85.6mm x 54.0mm)
+       ========================================================================== */
+    @page {
+      size: 85.6mm 54mm landscape;
+      margin: 0 !important;
+    }
+
+    @media print {
+      html, body {
+        width: 85.6mm !important;
+        height: 54mm !important;
+        max-width: 85.6mm !important;
+        max-height: 54mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        overflow: hidden !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+      }
+
+      .dashboard-container,
+      .qr-layout-grid,
+      .pvc-preview-card {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        display: block !important;
+        width: 85.6mm !important;
+        height: 54mm !important;
+        max-height: 54mm !important;
+        overflow: hidden !important;
+      }
+
+      body * {
+        visibility: hidden !important;
+      }
+
+      #pvc-printable-target, 
+      #pvc-printable-target * {
+        visibility: visible !important;
+      }
+
+      #pvc-printable-target {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 85.6mm !important;
+        height: 54mm !important;
+        max-width: 85.6mm !important;
+        max-height: 54mm !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 1.5mm 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 1.2mm !important;
+        background: #ffffff !important;
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
+        page-break-before: avoid !important;
+        break-inside: avoid !important;
+        break-after: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .pvc-cut-name {
+        font-size: 2.6mm !important;
+        font-weight: 800 !important;
+        color: #000000 !important;
+        text-align: center !important;
+        text-transform: uppercase !important;
+        max-width: 80mm !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        line-height: 1.1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+
+      .pvc-qr-circle-wrapper {
+        width: 28mm !important;
+        height: 28mm !important;
+        border: 0.8mm solid #000000 !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: #ffffff !important;
+        box-sizing: border-box !important;
+      }
+
+      #canvas {
+        width: 18.5mm !important;
+        height: 18.5mm !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      #canvas canvas {
+        width: 18.5mm !important;
+        height: 18.5mm !important;
+        image-rendering: pixelated !important;
+      }
+
+      .pvc-cut-sector {
+        font-size: 2.2mm !important;
+        font-weight: 700 !important;
+        color: #000000 !important;
+        text-align: center !important;
+        text-transform: uppercase !important;
+        max-width: 80mm !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        line-height: 1.1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    
+    <header class="main-header">
+      <div class="header-split-inline">
+        <div>
+          <h1>BARANGAY PVC PASS & QR TOKEN GENERATOR</h1>
+          <p style="font-weight: 800; color: #2563eb;">KING DUAL-ROUTING PROTOCOL (KDRP) TOKEN ISSUER</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="index.html" class="btn-secondary nav-action-btn">🏠 Live Access Console</a>
+          <a href="profile.html" class="btn-secondary nav-action-btn" style="border-color:#64748b; color:#64748b;">👤 Resident Profiles</a>
+          <a href="register.html" class="btn-secondary nav-action-btn" id="nav-register-btn">➕ Register Resident</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="qr-layout-grid">
+      
+      <!-- LEFT PANEL: PVC CARD PREVIEW -->
+      <section class="card pvc-preview-card">
+        <h2>Card Print Preview</h2>
+
+        <div class="active-resident-tag" id="active-resident-label">
+          Selected: <span id="resident-name-text">None</span> (<code id="resident-id-text">---</code>)
+        </div>
+
+        <!-- PVC CARD PREVIEW CONTAINER WITH NAME ON TOP & SECTOR BELOW -->
+        <div class="pvc-card-container" id="pvc-printable-target">
+          <div class="pvc-cut-name" id="pvc-card-cut-name">SELECT RESIDENT</div>
+          <div class="pvc-qr-circle-wrapper">
+            <div id="canvas"></div>
+          </div>
+          <div class="pvc-cut-sector" id="pvc-card-cut-sector">SECTOR: ---</div>
+        </div>
+
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" class="btn-download" id="download-btn" onclick="downloadSingleQR()" disabled>
+            💾 Download High-Res QR PNG
+          </button>
+          <button type="button" class="btn-secondary" id="print-btn" onclick="window.print()" style="padding: 0.65rem; font-weight: 700;" disabled>
+            🖨️ Print Standard PVC Card
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: RESIDENT DIRECTORY TABLE -->
+      <section class="card">
+        <div class="logs-header-inline">
+          <h2>Resident Master Database</h2>
+          <span id="registry-count-tag" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 700;">Connecting...</span>
+        </div>
+
+        <input type="text" id="directory-search" class="search-input-field" placeholder="🔍 Search resident by name, ID number, or address..." autocomplete="off">
+
+        <div class="table-wrapper" style="max-height: 580px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">Select</th>
+                <th>Unique ID</th>
+                <th>Resident Info</th>
+                <th>Age</th>
+                <th>Sector</th>
+                <th>Complete Address</th>
+              </tr>
+            </thead>
+            <tbody id="directory-tbody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading resident registry from Supabase...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20z'/></svg>";
+    
+    let allResidents = [];
+    let selectedResident = null;
+
+    // Resilient QR Engine with Auto Mode Encoding (Prevents Silent Crashes)
+    const qrCode = new QRCodeStyling({
+      width: 86,
+      height: 86,
+      type: "canvas",
+      data: "READY",
+      margin: 0,
+      qrOptions: {
+        errorCorrectionLevel: "L"
+      },
+      dotsOptions: {
+        color: "#000000",
+        type: "square"
+      },
+      cornersSquareOptions: {
+        type: "square",
+        color: "#000000"
+      },
+      cornersDotOptions: {
+        type: "square",
+        color: "#000000"
+      },
+      backgroundOptions: {
+        color: "#ffffff"
+      }
+    });
+
+    qrCode.append(document.getElementById("canvas"));
+
+    function sanitizeTokenPayload(token, fallbackId) {
+      const raw = token || fallbackId || "BRGY-2026";
+      return String(raw).replace(/^SMSTO:/i, '').replace(/[\r\n\t]/g, '').trim();
+    }
+
+    async function loadResidentsDirectory() {
+      try {
+        const res = await fetch('/api/residents');
+        const data = await res.json();
+
+        if (data.success && data.residents.length > 0) {
+          allResidents = data.residents;
+          document.getElementById('registry-count-tag').textContent = `${allResidents.length} Residents Registered`;
+          renderTable(allResidents);
+          
+          selectResident(allResidents[0].resident_id);
+        } else {
+          document.getElementById('directory-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">No resident records found.</td></tr>';
+          document.getElementById('registry-count-tag').textContent = `0 Records`;
+        }
+      } catch (err) {
+        console.error("Failed to load resident directory:", err);
+        document.getElementById('directory-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#dc2626; padding:2rem;">Failed to fetch database records.</td></tr>';
+      }
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById('directory-tbody');
+      tbody.innerHTML = '';
+
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;">No matching residents found.</td></tr>';
+        return;
+      }
+
+      list.forEach(resident => {
+        let imgStr = (resident.profile_pic && resident.profile_pic.startsWith("data:image")) 
+          ? resident.profile_pic.replace(/"/g, "'") 
+          : DEFAULT_SVG;
+        
+        let sectorClass = resident.sector.toLowerCase().includes('senior') 
+          ? 'senior' 
+          : (resident.sector.toLowerCase().includes('youth') ? 'youth' : '');
+
+        const isChecked = selectedResident && selectedResident.resident_id === resident.resident_id;
+
+        const tr = document.createElement('tr');
+        tr.id = `row-${resident.resident_id}`;
+        if (isChecked) tr.classList.add('selected-row');
+
+        tr.innerHTML = `
+          <td style="text-align:center;">
+            <input type="checkbox" class="table-checkbox" id="chk-${resident.resident_id}" ${isChecked ? 'checked' : ''} onchange="handleCheckboxChange('${resident.resident_id}', this)">
+          </td>
+          <td><code class="table-id">${resident.resident_id}</code></td>
+          <td>
+            <div class="table-inline-profile-cell">
+              <img src="${imgStr}" class="table-row-avatar" onerror="this.src='${DEFAULT_SVG}'">
+              <span class="strong-text">${resident.full_name}</span>
+            </div>
+          </td>
+          <td>${resident.age}</td>
+          <td><span class="sector-tag ${sectorClass}">${resident.sector}</span></td>
+          <td>${resident.complete_address}</td>
+        `;
+
+        tr.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'INPUT') {
+            selectResident(resident.resident_id);
+          }
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function handleCheckboxChange(residentId, checkboxElem) {
+      if (checkboxElem.checked) {
+        selectResident(residentId);
+      }
+    }
+
+    function selectResident(residentId) {
+      const found = allResidents.find(r => r.resident_id === residentId);
+      if (!found) return;
+
+      selectedResident = found;
+
+      document.querySelectorAll('.table-checkbox').forEach(chk => chk.checked = false);
+      document.querySelectorAll('#directory-tbody tr').forEach(row => row.classList.remove('selected-row'));
+
+      const currentChk = document.getElementById(`chk-${residentId}`);
+      if (currentChk) currentChk.checked = true;
+
+      const currentRow = document.getElementById(`row-${residentId}`);
+      if (currentRow) currentRow.classList.add('selected-row');
+
+      document.getElementById('resident-name-text').textContent = found.full_name;
+      document.getElementById('resident-id-text').textContent = found.resident_id;
+      
+      // Update Name & Sector on Card Surface
+      document.getElementById('pvc-card-cut-name').textContent = found.full_name;
+      document.getElementById('pvc-card-cut-sector').textContent = found.sector ? `SECTOR: ${found.sector}` : 'SECTOR: GENERAL';
+
+      const cleanToken = sanitizeTokenPayload(found.wristband_id, found.resident_id);
+      
+      try {
+        qrCode.update({
+          data: cleanToken
+        });
+      } catch (err) {
+        console.warn("QR fallback triggered:", err);
+        qrCode.update({ data: found.resident_id });
+      }
+
+      document.getElementById('download-btn').removeAttribute('disabled');
+      document.getElementById('print-btn').removeAttribute('disabled');
+    }
+
+    document.getElementById('directory-search').addEventListener('input', function(e) {
+      const term = e.target.value.toLowerCase().trim();
+      const filtered = allResidents.filter(r => 
+        r.full_name.toLowerCase().includes(term) ||
+        r.resident_id.toLowerCase().includes(term) ||
+        r.complete_address.toLowerCase().includes(term) ||
+        r.sector.toLowerCase().includes(term)
+      );
+      renderTable(filtered);
+    });
+
+    function downloadSingleQR() {
+      if (!selectedResident) return;
+      const cleanFileName = `LONG_RANGE_QR_${selectedResident.resident_id}_${selectedResident.full_name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      qrCode.download({ name: cleanFileName, extension: "png" });
+    }
+
+    window.addEventListener('DOMContentLoaded', loadResidentsDirectory);
+  </script>
+</body>
+</html>
